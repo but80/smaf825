@@ -4,6 +4,8 @@ import (
 	"io"
 	"strings"
 
+	"unsafe"
+
 	"github.com/mersenne-sister/smaf825/smaf/enums"
 	"github.com/mersenne-sister/smaf825/smaf/util"
 )
@@ -32,6 +34,9 @@ func (c *MMMGChunk) String() string {
 
 func (c *MMMGChunk) Read(rdr io.Reader) error {
 	rest := int(c.ChunkHeader.Size)
+	enigma := make([]byte, 2)
+	rdr.Read(enigma)
+	rest -= int(unsafe.Sizeof(enigma))
 	for 8 <= rest {
 		var hdr ChunkHeader
 		err := hdr.Read(rdr, &rest)

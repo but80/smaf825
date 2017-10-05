@@ -7,6 +7,7 @@ import (
 	"unsafe"
 
 	"github.com/mersenne-sister/smaf825/smaf/enums"
+	"github.com/pkg/errors"
 )
 
 type Chunk interface {
@@ -61,6 +62,8 @@ func (hdr *ChunkHeader) CreateChunk(rdr io.Reader, formatType enums.ScoreTrackFo
 		}
 	case 'V'<<24 | 'O'<<16 | 'I'<<8 | 'C': // VOIC
 		chunk = &MMMGVoiceChunk{ChunkHeader: hdr}
+	case 'E'<<24 | 'X'<<16 | 'V'<<8 | 'O': // EXVO
+		chunk = &MMMGEXVOChunk{ChunkHeader: hdr}
 	default:
 		switch hdr.Signature & 0xFFFFFF00 {
 		case 'M'<<24 | 'T'<<16 | 'R'<<8: // MTRx
@@ -73,7 +76,7 @@ func (hdr *ChunkHeader) CreateChunk(rdr io.Reader, formatType enums.ScoreTrackFo
 	}
 	err := chunk.Read(rdr)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "Creating %T (0x%08X)", chunk, hdr.Signature)
 	}
 	return chunk, nil
 }

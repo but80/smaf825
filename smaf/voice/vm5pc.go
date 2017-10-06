@@ -82,6 +82,9 @@ func (p *VM5VoicePC) String() string {
 	if p.IsForDrum() {
 		s += fmt.Sprintf(" DrumNote=%s\n", p.DrumNote.String())
 	}
-	s += fmt.Sprintf(": [%s]\n", p.Name)
+	if p.Name != "" {
+		s += fmt.Sprintf(": [%s]", p.Name)
+	}
+	s += "\n"
 	return s + util.Indent(p.Voice.String(), "\t")
 }

@@ -112,25 +112,17 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, loop, volume, gain, seqvol int) e
 	//
 	//fmt.Println("collecting voices")
 	for _, x := range setup.Exclusives {
-		if x.IsVM5FMVoice() {
-			v, err := x.ToVM5FMVoice()
-			if err != nil {
-				return errors.WithStack(err)
+		switch x.Type {
+		case enums.ExclusiveType_VM5Voice:
+			v := x.VM5VoicePC
+			if v != nil && !sequence.IsIgnoredPC(v.BankMSB, v.BankLSB, v.PC, v.DrumNote) {
+				State.AddTone(v)
 			}
-			switch v.VoiceType {
-			case enums.VoiceType_FM:
-				if !sequence.IsIgnoredPC(v.BankMSB, v.BankLSB, v.PC, v.DrumNote) {
-					State.AddTone(v)
-				}
+		case enums.ExclusiveType_VMAVoice:
+			v := x.VMAVoicePC
+			if v != nil {
+				State.AddTone(v.ToVM5())
 			}
-		} else if x.IsVMAVoice() {
-			v, err := x.ToVMAVoice()
-			if err != nil {
-				return errors.WithStack(err)
-			}
-			//fmt.Printf("VMA: %s\n", v.String())
-			//fmt.Printf("VM5: %s\n", v.ToVM5().String())
-			State.AddTone(v.ToVM5())
 		}
 	}
 	//

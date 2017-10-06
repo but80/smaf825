@@ -52,7 +52,10 @@ func (p *VMAVoicePC) Read(rdr io.Reader, rest *int) error {
 
 func (p *VMAVoicePC) String() string {
 	s := fmt.Sprintf("Bank %d @%d", p.Bank, p.PC)
-	s += fmt.Sprintf(": [%s]\n", p.Name)
+	if p.Name != "" {
+		s += fmt.Sprintf(": [%s]", p.Name)
+	}
+	s += "\n"
 	return s + util.Indent(p.Voice.String(), "\t")
 }
 

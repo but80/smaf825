@@ -14,15 +14,15 @@ import (
 )
 
 type ScoreTrackSequenceDataChunk struct {
-	*ChunkHeader
-	FormatType        enums.ScoreTrackFormatType
-	Events            []event.DurationEventPair
-	IsChannelUsed     map[int]bool
-	UsedChannelCount  int
-	UsedNoteCount     map[int]int
-	NoteToChannel     map[int]map[enums.Note]int
-	ChannelToChannels map[int][]int
-	IgnoredPC         map[uint32]bool
+	*ChunkHeader      `json:"chunk_header"`
+	FormatType        enums.ScoreTrackFormatType `json:"format_type"`
+	Events            []event.DurationEventPair  `json:"events"`
+	IsChannelUsed     map[int]bool               `json:"-"`
+	UsedChannelCount  int                        `json:"-"`
+	UsedNoteCount     map[int]int                `json:"-"`
+	NoteToChannel     map[int]map[enums.Note]int `json:"-"`
+	ChannelToChannels map[int][]int              `json:"-"`
+	IgnoredPC         map[uint32]bool            `json:"-"`
 }
 
 func (c *ScoreTrackSequenceDataChunk) Traverse(fn func(Chunk)) {

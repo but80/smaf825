@@ -1,6 +1,7 @@
 package enums
 
 import (
+	"encoding/json"
 	"fmt"
 )
 
@@ -24,4 +25,8 @@ func (t ScoreTrackFormatType) String() string {
 		s = "MobileStandardNonCompressed"
 	}
 	return fmt.Sprintf("%s(0x%02X)", s, int(t))
+}
+
+func (t ScoreTrackFormatType) MarshalJSON() ([]byte, error) {
+	return json.Marshal(t.String())
 }

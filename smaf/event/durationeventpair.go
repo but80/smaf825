@@ -1,6 +1,6 @@
 package event
 
 type DurationEventPair struct {
-	Duration int
-	Event    Event
+	Duration int   `json:"duration"`
+	Event    Event `json:"event"`
 }

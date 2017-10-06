@@ -12,25 +12,25 @@ import (
 
 type DataChunk struct {
 	*ChunkHeader
-	Stream     []uint8
-	HasOptions bool
+	Stream     []uint8 `json:"stream"`
+	HasOptions bool    `json:"has_options"`
 	Options    struct {
-		Vendor          string
-		Carrior         string
-		Category        string
-		Title           string
-		Artist          string
-		LyricWriter     string
-		Composer        string
-		Arranger        string
-		Copyright       string
-		ManagementGroup string
-		ManagementInfo  string
-		CreatedDate     string
-		UpdatedDate     string
-		EditStatus      string
-		VCard           string
-	}
+		Vendor          string `json:"vendor,omitempty"`
+		Carrier         string `json:"carrier,omitempty"`
+		Category        string `json:"category,omitempty"`
+		Title           string `json:"title,omitempty"`
+		Artist          string `json:"artist,omitempty"`
+		LyricWriter     string `json:"lyric_writer,omitempty"`
+		Composer        string `json:"composer,omitempty"`
+		Arranger        string `json:"arranger,omitempty"`
+		Copyright       string `json:"copyright,omitempty"`
+		ManagementGroup string `json:"management_group,omitempty"`
+		ManagementInfo  string `json:"management_info,omitempty"`
+		CreatedDate     string `json:"created_date,omitempty"`
+		UpdatedDate     string `json:"updated_date,omitempty"`
+		EditStatus      string `json:"edit_status,omitempty"`
+		VCard           string `json:"vcard,omitempty"`
+	} `json:"options,omitempty"`
 }
 
 func (c *DataChunk) Traverse(fn func(Chunk)) {
@@ -74,7 +74,7 @@ func (c *DataChunk) Read(rdr io.Reader) error {
 		}
 		c.HasOptions = true
 		c.Options.Vendor = options["VN"]
-		c.Options.Carrior = options["CN"]
+		c.Options.Carrier = options["CN"]
 		c.Options.Category = options["CA"]
 		c.Options.Title = options["ST"]
 		c.Options.Artist = options["AN"]

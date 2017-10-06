@@ -12,8 +12,8 @@ import (
 
 type MMMGChunk struct {
 	*ChunkHeader
-	Enigma    uint16
-	SubChunks []Chunk
+	Enigma    uint16  `json:"-"`
+	SubChunks []Chunk `json:"sub_chunks"`
 }
 
 func (c *MMMGChunk) Traverse(fn func(Chunk)) {

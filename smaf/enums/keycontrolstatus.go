@@ -1,6 +1,7 @@
 package enums
 
 import (
+	"encoding/json"
 	"fmt"
 )
 
@@ -23,4 +24,8 @@ func (t KeyControlStatus) String() string {
 		s = "On"
 	}
 	return fmt.Sprintf("%s(0x%02X)", s, int(t))
+}
+
+func (t KeyControlStatus) MarshalJSON() ([]byte, error) {
+	return json.Marshal(t.String())
 }

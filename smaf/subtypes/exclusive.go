@@ -14,7 +14,7 @@ import (
 
 type Exclusive struct {
 	variableLength bool
-	Data           []uint8
+	Data           []uint8 `json:"data"`
 }
 
 func NewExclusive(variableLength bool) *Exclusive {

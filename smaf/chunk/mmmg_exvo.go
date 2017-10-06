@@ -15,8 +15,8 @@ import (
 
 type MMMGEXVOChunk struct {
 	*ChunkHeader
-	Stream    []uint8
-	Exclusive *subtypes.Exclusive
+	Stream    []uint8             `json:"stream"`
+	Exclusive *subtypes.Exclusive `json:"exclusive"`
 }
 
 func (c *MMMGEXVOChunk) Traverse(fn func(Chunk)) {

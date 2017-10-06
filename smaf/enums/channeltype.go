@@ -1,6 +1,7 @@
 package enums
 
 import (
+	"encoding/json"
 	"fmt"
 )
 
@@ -26,4 +27,8 @@ func (t ChannelType) String() string {
 		s = "Rhythm"
 	}
 	return fmt.Sprintf("%s(0x%02X)", s, int(t))
+}
+
+func (t ChannelType) MarshalJSON() ([]byte, error) {
+	return json.Marshal(t.String())
 }

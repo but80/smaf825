@@ -6,9 +6,21 @@ import (
 	"io"
 	"unsafe"
 
+	"encoding/json"
+
 	"github.com/mersenne-sister/smaf825/smaf/enums"
 	"github.com/pkg/errors"
 )
+
+type Signature uint32
+
+func (s Signature) String() string {
+	return fmt.Sprintf("%c%c%c%c", s>>24, s>>16&255, s>>8&255, s&255)
+}
+
+func (s Signature) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.String())
+}
 
 type Chunk interface {
 	fmt.Stringer
@@ -17,15 +29,15 @@ type Chunk interface {
 }
 
 type ChunkHeader struct {
-	Signature uint32
-	Size      uint32
+	Signature Signature `json:"signature"`
+	Size      uint32    `json:"-"`
 }
 
 func (hdr *ChunkHeader) String() string {
 	s := hdr.Signature
 	ss := fmt.Sprintf("%c%c%c", s>>24, s>>16&255, s>>8&255)
 	switch ss {
-	case "MTR", "ATR", "GTR":
+	case "MTR", "ATR", "GTR", "Dch":
 		ss += fmt.Sprintf("*(0x%02X)", s&255)
 	default:
 		ss += fmt.Sprintf("%c", s&255)
@@ -66,9 +78,9 @@ func (hdr *ChunkHeader) CreateChunk(rdr io.Reader, formatType enums.ScoreTrackFo
 		chunk = &MMMGEXVOChunk{ChunkHeader: hdr}
 	default:
 		switch hdr.Signature & 0xFFFFFF00 {
-		case 'M'<<24 | 'T'<<16 | 'R'<<8: // MTRx
+		case 'M'<<24 | 'T'<<16 | 'R'<<8: // MTR*
 			chunk = &ScoreTrackChunk{ChunkHeader: hdr}
-		case 'D'<<24 | 'c'<<16 | 'h'<<8: // Dchx
+		case 'D'<<24 | 'c'<<16 | 'h'<<8: // Dch*
 			chunk = &DataChunk{ChunkHeader: hdr}
 		default: // unknown sub chunk
 			chunk = &UnknownChunk{ChunkHeader: hdr}

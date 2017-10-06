@@ -11,7 +11,7 @@ import (
 
 type OptionalDataChunk struct {
 	*ChunkHeader
-	SubChunks []Chunk
+	SubChunks []Chunk `json:"sub_chunks"`
 }
 
 func (c *OptionalDataChunk) Traverse(fn func(Chunk)) {

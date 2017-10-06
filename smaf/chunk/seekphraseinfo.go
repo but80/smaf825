@@ -11,7 +11,7 @@ import (
 
 type SeekPhraseInfoChunk struct {
 	*ChunkHeader
-	Stream []uint8
+	Stream []uint8 `json:"stream"`
 }
 
 func (c *SeekPhraseInfoChunk) Traverse(fn func(Chunk)) {

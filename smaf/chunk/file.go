@@ -15,10 +15,10 @@ import (
 )
 
 type FileChunk struct {
-	SMAFChunkHeader ChunkHeader
-	SubChunks       []Chunk
-	CRCGot          uint16
-	CRCWant         uint16
+	*ChunkHeader
+	SubChunks []Chunk `json:"sub_chunks"`
+	CRCGot    uint16  `json:"-"`
+	CRCWant   uint16  `json:"-"`
 }
 
 func (c *FileChunk) Traverse(fn func(Chunk)) {
@@ -29,7 +29,7 @@ func (c *FileChunk) Traverse(fn func(Chunk)) {
 }
 
 func (c *FileChunk) String() string {
-	result := "MMF File Chunk: " + c.SMAFChunkHeader.String()
+	result := "MMF File Chunk: " + c.ChunkHeader.String()
 	sub := []string{}
 	for _, chunk := range c.SubChunks {
 		sub = append(sub, chunk.String())
@@ -74,18 +74,19 @@ func calcCRC(rdr io.Reader, len int) (uint16, error) {
 func (c *FileChunk) Read(rdr io.Reader) error {
 	c.SubChunks = []Chunk{}
 
-	err := binary.Read(rdr, binary.BigEndian, &c.SMAFChunkHeader)
+	c.ChunkHeader = &ChunkHeader{}
+	err := binary.Read(rdr, binary.BigEndian, c.ChunkHeader)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	rest := int(c.SMAFChunkHeader.Size)
+	rest := int(c.ChunkHeader.Size)
 
 	for 8 <= rest {
 		var hdr ChunkHeader
-		from := int(c.SMAFChunkHeader.Size) - rest + int(unsafe.Sizeof(c.SMAFChunkHeader))
+		from := int(c.ChunkHeader.Size) - rest + int(unsafe.Sizeof(c.ChunkHeader))
 		err := hdr.Read(rdr, &rest)
-		to := int(c.SMAFChunkHeader.Size) - rest + int(unsafe.Sizeof(c.SMAFChunkHeader))
+		to := int(c.ChunkHeader.Size) - rest + int(unsafe.Sizeof(c.ChunkHeader))
 		if err != nil {
 			return errors.Wrapf(err, "at 0x%X -> 0x%X", from, to)
 		}

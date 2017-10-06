@@ -14,29 +14,29 @@ import (
 type ContentsInfoChunk struct {
 	*ChunkHeader
 	Header struct {
-		ContentsClass    uint8
-		ContentsType     uint8
-		ContentsCodeType uint8
-		CopyStatus       uint8
-		CopyCounts       uint8
-	}
-	Stream     []uint8
-	HasOptions bool
+		ContentsClass    uint8 `json:"contents_class"`
+		ContentsType     uint8 `json:"contents_type"`
+		ContentsCodeType uint8 `json:"contents_code_type"`
+		CopyStatus       uint8 `json:"copy_status"`
+		CopyCounts       uint8 `json:"copy_counts"`
+	} `json:"header"`
+	Stream     []uint8 `json:"stream"`
+	HasOptions bool    `json:"has_options"`
 	Options    struct {
-		Vendor          string
-		Carrier         string
-		Category        string
-		Title           string
-		Artist          string
-		LyricWriter     string
-		Composer        string
-		Arranger        string
-		Copyright       string
-		ManagementGroup string
-		ManagementInfo  string
-		CreatedDate     string
-		UpdatedDate     string
-	}
+		Vendor          string `json:"vendor,omitempty"`
+		Carrier         string `json:"carrier,omitempty"`
+		Category        string `json:"category,omitempty"`
+		Title           string `json:"title,omitempty"`
+		Artist          string `json:"artist,omitempty"`
+		LyricWriter     string `json:"lyric_writer,omitempty"`
+		Composer        string `json:"composer,omitempty"`
+		Arranger        string `json:"arranger,omitempty"`
+		Copyright       string `json:"copyright,omitempty"`
+		ManagementGroup string `json:"management_group,omitempty"`
+		ManagementInfo  string `json:"management_info,omitempty"`
+		CreatedDate     string `json:"created_date,omitempty"`
+		UpdatedDate     string `json:"updated_date,omitempty"`
+	} `json:"options,omitempty"`
 }
 
 func (c *ContentsInfoChunk) Traverse(fn func(Chunk)) {

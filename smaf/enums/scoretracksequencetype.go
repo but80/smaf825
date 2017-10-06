@@ -1,6 +1,9 @@
 package enums
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 type ScoreTrackSequenceType int
 
@@ -20,4 +23,8 @@ func (t ScoreTrackSequenceType) String() string {
 		s = "Subsequence"
 	}
 	return fmt.Sprintf("%s(0x%02X)", s, int(t))
+}
+
+func (t ScoreTrackSequenceType) MarshalJSON() ([]byte, error) {
+	return json.Marshal(t.String())
 }

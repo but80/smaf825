@@ -10,7 +10,7 @@ import (
 
 type MMMGVoiceChunk struct {
 	*ChunkHeader
-	SubChunks []Chunk
+	SubChunks []Chunk `json:"sub_chunks"`
 }
 
 func (c *MMMGVoiceChunk) Traverse(fn func(Chunk)) {

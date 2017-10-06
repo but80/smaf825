@@ -13,9 +13,9 @@ import (
 )
 
 type ScoreTrackSetupDataChunk struct {
-	*ChunkHeader
-	Exclusives    []*subtypes.Exclusive
-	UnknownStream []uint8
+	*ChunkHeader  `json:"chunk_header"`
+	Exclusives    []*subtypes.Exclusive `json:"exclusives"`
+	UnknownStream []uint8               `json:"unknown_stream,omitempty"`
 }
 
 func (c *ScoreTrackSetupDataChunk) Traverse(fn func(Chunk)) {

@@ -34,10 +34,10 @@ type Event interface {
 }
 
 type NoteEvent struct {
-	Channel  int
-	Note     enums.Note
-	Velocity int
-	GateTime int
+	Channel  int        `json:"channel"`
+	Note     enums.Note `json:"note"`
+	Velocity int        `json:"velocity"`
+	GateTime int        `json:"gate_time"`
 }
 
 func (e *NoteEvent) GetChannel() int {
@@ -49,9 +49,9 @@ func (e *NoteEvent) String() string {
 }
 
 type ControlChangeEvent struct {
-	Channel int
-	CC      enums.CC
-	Value   int
+	Channel int      `json:"channel"`
+	CC      enums.CC `json:"cc"`
+	Value   int      `json:"value"`
 }
 
 func (e *ControlChangeEvent) GetChannel() int {
@@ -63,9 +63,8 @@ func (e *ControlChangeEvent) String() string {
 }
 
 type ProgramChangeEvent struct {
-	Channel int
-	PC      int
-	Value   int
+	Channel int `json:"channel"`
+	PC      int `json:"pc"`
 }
 
 func (e *ProgramChangeEvent) GetChannel() int {
@@ -77,8 +76,8 @@ func (e *ProgramChangeEvent) String() string {
 }
 
 type PitchBendEvent struct {
-	Channel int
-	Value   int
+	Channel int `json:"channel"`
+	Value   int `json:"value"`
 }
 
 func (e *PitchBendEvent) GetChannel() int {
@@ -90,8 +89,8 @@ func (e *PitchBendEvent) String() string {
 }
 
 type OctaveShiftEvent struct {
-	Channel int
-	Value   int
+	Channel int `json:"channel"`
+	Value   int `json:"value"`
 }
 
 func (e *OctaveShiftEvent) GetChannel() int {
@@ -103,7 +102,7 @@ func (e *OctaveShiftEvent) String() string {
 }
 
 type ExclusiveEvent struct {
-	Exclusive *subtypes.Exclusive
+	Exclusive *subtypes.Exclusive `json:"exclusive"`
 }
 
 func (e *ExclusiveEvent) GetChannel() int {

@@ -22,13 +22,13 @@ type scoreTrackRawHeader struct {
 }
 
 type ScoreTrackChunk struct {
-	*ChunkHeader
-	FormatType       enums.ScoreTrackFormatType
-	SequenceType     enums.ScoreTrackSequenceType
-	DurationTimeBase int
-	GateTimeBase     int
-	ChannelStatus    []*subtypes.ChannelStatus
-	SubChunks        []Chunk
+	*ChunkHeader     `json:"chunk_header"`
+	FormatType       enums.ScoreTrackFormatType   `json:"format_type"`
+	SequenceType     enums.ScoreTrackSequenceType `json:"sequence_type"`
+	DurationTimeBase int                          `json:"duration_time_base"`
+	GateTimeBase     int                          `json:"gate_time_base"`
+	ChannelStatus    []*subtypes.ChannelStatus    `json:"channel_status"`
+	SubChunks        []Chunk                      `json:"sub_chunks"`
 }
 
 func (c *ScoreTrackChunk) Traverse(fn func(Chunk)) {

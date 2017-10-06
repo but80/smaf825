@@ -8,7 +8,7 @@ import (
 
 type UnknownChunk struct {
 	*ChunkHeader
-	Stream []uint8
+	Stream []uint8 `json:"stream"`
 }
 
 func (c *UnknownChunk) Traverse(fn func(Chunk)) {

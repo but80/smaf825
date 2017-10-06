@@ -1,6 +1,9 @@
 package enums
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 type VoiceType int
 
@@ -21,6 +24,10 @@ func (t VoiceType) String() string {
 		s = "AL"
 	}
 	return fmt.Sprintf("%s(%d)", s, t)
+}
+
+func (t VoiceType) MarshalJSON() ([]byte, error) {
+	return json.Marshal(t.String())
 }
 
 type Algorithm int

@@ -4,20 +4,20 @@ SMAFフォーマットの着メロを Arduino + YMF825Board で再生するプ�
 
 ## 準備
 
-1. 以下の記事を参考にハードウェアを用意し、まずは公式サンプルを鳴らしてみてください。
+1. [Go 1.8 をインストール](https://golang.org/dl/) してください。
+2. `go get -u github.com/mersenne-sister/smaf825` にて、当プロジェクトをcloneしてください。
+   CLIコマンド `smaf825` が同時にインストールされますので、ためしに引数なしで実行してみてください。
+3. 以下の記事を参考にハードウェアを用意し、まずは記事通りに公式サンプルを鳴らしてみてください。
    - [YMF825BoardをArduinoで鳴らしてみる](https://fabble.cc/yamahafsm/ymf825boardarduino)
-2. 無事動作したら、当プロジェクトの [bridge/bridge.ino](bridge/bridge.ino) を参考記事と同様の方法でArduinoに転送してください。
-3. [Go 1.8 をインストール](https://golang.org/dl/) してください。
-4. `go get -u github.com/mersenne-sister/smaf825` にて、当プロジェクトのCLIをインストールしてください。
+4. 無事動作したら、当プロジェクトの [bridge/bridge.ino](bridge/bridge.ino) を参考記事と同様の方法でArduinoに転送してください。
 
 ## SMAFの再生
 
 以下のようにして再生できます。
-Arduinoを接続しているシリアルポートのデバイス名を指定する必要がありますので、
-スケッチの転送時に指定したデバイス名をここでも指定してください。
+Arduinoを接続しているシリアルポートのデバイス名を指定する必要がありますので、スケッチの転送時に指定したデバイス名をここでも指定してください。
 
 ```bash
-smaf825 play mmf /dev/tty.usbserial-xxxxxxxx music.mmf
+smaf825 play /dev/tty.usbserial-xxxxxxxx music.mmf
 ```
 
 ## 参考情報

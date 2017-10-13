@@ -11,6 +11,7 @@ const (
 	ScoreTrackFormatType_HandyPhoneStandard ScoreTrackFormatType = iota
 	ScoreTrackFormatType_MobileStandardCompressed
 	ScoreTrackFormatType_MobileStandardNonCompressed
+	ScoreTrackFormatType_SEQU    = -1
 	ScoreTrackFormatType_Default = ScoreTrackFormatType_HandyPhoneStandard
 )
 

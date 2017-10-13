@@ -58,20 +58,28 @@ func (c *ScoreTrackSequenceDataChunk) Read(rdr io.Reader) error {
 			return errors.Errorf("Invalid event: 0x%08X at last", eos)
 		}
 		var pair event.DurationEventPair
-		var isHPS = c.FormatType == enums.ScoreTrackFormatType_HandyPhoneStandard
-		dur, err := util.ReadVariableInt(!isHPS, rdr, &rest)
+		var err error
+		switch c.FormatType {
+		case enums.ScoreTrackFormatType_HandyPhoneStandard:
+			pair.Duration, err = util.ReadVariableInt(false, rdr, &rest)
+			if err == nil {
+				pair.Event, err = event.CreateEventHPS(rdr, &rest, ctx)
+			}
+		case enums.ScoreTrackFormatType_SEQU:
+			pair.Duration, err = util.ReadVariableInt(false, rdr, &rest)
+			if err == nil {
+				pair.Event, err = event.CreateEventSEQU(rdr, &rest, ctx)
+			}
+		default:
+			pair.Duration, err = util.ReadVariableInt(true, rdr, &rest)
+			if err == nil {
+				pair.Event, err = event.CreateEvent(rdr, &rest, ctx)
+			}
+		}
 		if err != nil {
-			return errors.WithStack(err)
+			return errors.Wrapf(err, "at 0x%X in Mtsq", int(c.Size)-rest)
 		}
-		pair.Duration = dur
-		if isHPS {
-			pair.Event, err = event.CreateEventHPS(rdr, &rest, ctx)
-		} else {
-			pair.Event, err = event.CreateEvent(rdr, &rest, ctx)
-		}
-		if err != nil {
-			return errors.Errorf("at 0x%X in Mtsq", int(c.Size)-rest)
-		}
+		fmt.Printf("%s\n", pair.Event.String())
 		if pair.Event == nil {
 			break
 		}

@@ -101,6 +101,19 @@ func (e *OctaveShiftEvent) String() string {
 	return fmt.Sprintf("Tr.%02d OctaveShift %d", e.Channel, e.Value)
 }
 
+type FineTuneEvent struct {
+	Channel int `json:"channel"`
+	Value   int `json:"value"`
+}
+
+func (e *FineTuneEvent) GetChannel() int {
+	return e.Channel
+}
+
+func (e *FineTuneEvent) String() string {
+	return fmt.Sprintf("Tr.%02d Fine %d", e.Channel, e.Value)
+}
+
 type ExclusiveEvent struct {
 	Exclusive *subtypes.Exclusive `json:"exclusive"`
 }
@@ -132,6 +145,144 @@ var shortModTable = []int{
 var shortExpTable = []int{
 	0x00, 0x00, 0x1F, 0x27, 0x2F, 0x37, 0x3F, 0x47,
 	0x4F, 0x57, 0x5F, 0x67, 0x6F, 0x77, 0x7F, 0x7F,
+}
+
+func CreateEventSEQU(rdr io.Reader, rest *int, ctx *sequenceBuilderContext) (Event, error) {
+	var sig uint8
+	err := binary.Read(rdr, binary.BigEndian, &sig)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	*rest--
+
+	if sig == 0x00 {
+		err := binary.Read(rdr, binary.BigEndian, &sig)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		*rest--
+
+		ch := int(sig >> 6)
+		msg := int(sig & 0x3f)
+		if msg == 0x00 {
+			var fine uint8
+			err := binary.Read(rdr, binary.BigEndian, &fine)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
+			*rest--
+			return &FineTuneEvent{Channel: ch, Value: int(fine)}, nil
+		} else if 0x01 <= msg && msg <= 0x0e {
+			return &ControlChangeEvent{Channel: ch, CC: enums.CC_Expression, Value: shortExpTable[msg]}, nil
+		} else if 0x11 <= msg && msg <= 0x1e {
+			return &PitchBendEvent{Channel: ch, Value: int(msg-0x10) * 16384 / 16}, nil
+		} else if 0x21 <= msg && msg <= 0x2e {
+			return &ControlChangeEvent{Channel: ch, CC: enums.CC_Modulation, Value: shortModTable[msg-0x20]}, nil
+		} else if msg == 0x30 {
+			var value uint8
+			err := binary.Read(rdr, binary.BigEndian, &value)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
+			*rest--
+			return &ProgramChangeEvent{Channel: ch, PC: int(value)}, nil
+		} else if msg == 0x31 {
+			var value uint8
+			err := binary.Read(rdr, binary.BigEndian, &value)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
+			*rest--
+			return &ControlChangeEvent{Channel: ch, CC: enums.CC_BankSelectLSB, Value: int(value)}, nil
+		} else if msg == 0x32 {
+			var value uint8
+			err := binary.Read(rdr, binary.BigEndian, &value)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
+			*rest--
+			return &OctaveShiftEvent{Channel: ch, Value: int(value)}, nil
+		} else if msg == 0x33 {
+			var value uint8
+			err := binary.Read(rdr, binary.BigEndian, &value)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
+			*rest--
+			return &ControlChangeEvent{Channel: ch, CC: enums.CC_Modulation, Value: int(value)}, nil
+		} else if msg == 0x34 {
+			var value uint8
+			err := binary.Read(rdr, binary.BigEndian, &value)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
+			*rest--
+			return &PitchBendEvent{Channel: ch, Value: int(value) * 16384 / 256}, nil
+		} else if msg == 0x36 {
+			var value uint8
+			err := binary.Read(rdr, binary.BigEndian, &value)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
+			*rest--
+			// @todo 仮
+			return &ControlChangeEvent{Channel: ch, CC: enums.CC_MonoOn, Value: int(value)}, nil
+		} else if msg == 0x37 {
+			var value uint8
+			err := binary.Read(rdr, binary.BigEndian, &value)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
+			*rest--
+			return &ControlChangeEvent{Channel: ch, CC: enums.CC_MainVolume, Value: int(value)}, nil
+		} else if msg == 0x3a {
+			var value uint8
+			err := binary.Read(rdr, binary.BigEndian, &value)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
+			*rest--
+			return &ControlChangeEvent{Channel: ch, CC: enums.CC_Panpot, Value: int(value)}, nil
+		} else if msg == 0x3b {
+			var value uint8
+			err := binary.Read(rdr, binary.BigEndian, &value)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
+			*rest--
+			return &ControlChangeEvent{Channel: ch, CC: enums.CC_Expression, Value: int(value)}, nil
+		} else {
+			return nil, errors.Errorf("Invalid event: 0x%02X", sig)
+		}
+	} else if sig == 0xff {
+		var sig2 uint8
+		err := binary.Read(rdr, binary.BigEndian, &sig2)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		*rest--
+		switch sig2 {
+		case 0x00:
+			return &NopEvent{}, nil
+		case 0xF0:
+			ex := subtypes.NewExclusive(false)
+			err = ex.Read(rdr, rest)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
+			return &ExclusiveEvent{Exclusive: ex}, nil
+		default:
+			return nil, errors.Errorf("Invalid event: 0x%02X%02X", sig, sig2)
+		}
+	} else {
+		ch := int(sig >> 6)
+		note := enums.Note(sig&15) + enums.Note(sig>>4&3)*12
+		gate, err := util.ReadVariableInt(false, rdr, rest)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		return &NoteEvent{Channel: ch, Note: note, Velocity: 127, GateTime: gate}, nil
+	}
 }
 
 func CreateEventHPS(rdr io.Reader, rest *int, ctx *sequenceBuilderContext) (Event, error) {

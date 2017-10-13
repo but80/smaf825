@@ -99,7 +99,7 @@ func (x *Exclusive) Read(rdr io.Reader, rest *int) error {
 		if err == nil {
 			x.VM5VoicePC = &voice.VM5VoicePC{
 				BankMSB:  0,
-				BankLSB:  0,
+				BankLSB:  int(x.Data[3]),
 				PC:       int(x.Data[4]),
 				DrumNote: 0,
 				Voice:    v,

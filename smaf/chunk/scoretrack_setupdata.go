@@ -18,6 +18,10 @@ type ScoreTrackSetupDataChunk struct {
 	UnknownStream []uint8               `json:"unknown_stream,omitempty"`
 }
 
+func (c *ScoreTrackSetupDataChunk) GetExclusives() []*subtypes.Exclusive {
+	return c.Exclusives
+}
+
 func (c *ScoreTrackSetupDataChunk) Traverse(fn func(Chunk)) {
 	fn(c)
 }

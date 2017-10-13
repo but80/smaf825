@@ -95,6 +95,7 @@ func (c *ScoreTrackChunk) Read(rdr io.Reader) error {
 	c.DurationTimeBase = timeBase(rawHeader.TimebaseD)
 	c.GateTimeBase = timeBase(rawHeader.TimebaseG)
 
+	c.ChannelStatus = map[enums.Channel]*subtypes.ChannelStatus{}
 	switch c.FormatType {
 	case enums.ScoreTrackFormatType_HandyPhoneStandard:
 		var b uint16

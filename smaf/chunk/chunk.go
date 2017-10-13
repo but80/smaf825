@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 
 	"github.com/mersenne-sister/smaf825/smaf/enums"
+	"github.com/mersenne-sister/smaf825/smaf/subtypes"
 	"github.com/pkg/errors"
 )
 
@@ -20,6 +21,10 @@ func (s Signature) String() string {
 
 func (s Signature) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s.String())
+}
+
+type ExclusiveContainer interface {
+	GetExclusives() []*subtypes.Exclusive
 }
 
 type Chunk interface {

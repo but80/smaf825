@@ -5,12 +5,24 @@ import (
 	"strings"
 
 	"github.com/mersenne-sister/smaf825/smaf/enums"
+	"github.com/mersenne-sister/smaf825/smaf/subtypes"
 	"github.com/mersenne-sister/smaf825/smaf/util"
 )
 
 type MMMGVoiceChunk struct {
 	*ChunkHeader
 	SubChunks []Chunk `json:"sub_chunks"`
+}
+
+func (c *MMMGVoiceChunk) GetExclusives() []*subtypes.Exclusive {
+	result := []*subtypes.Exclusive{}
+	c.Traverse(func(s Chunk) {
+		switch exvo := s.(type) {
+		case *MMMGEXVOChunk:
+			result = append(result, exvo.Exclusive)
+		}
+	})
+	return result
 }
 
 func (c *MMMGVoiceChunk) Traverse(fn func(Chunk)) {

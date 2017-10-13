@@ -40,10 +40,9 @@ type Sequencer struct {
 
 func (q *Sequencer) Play(mmf *chunk.FileChunk, loop, volume, gain, seqvol int) error {
 	var err error
-	n := 0
 	var info *chunk.ContentsInfoChunk
 	var data *chunk.DataChunk
-	var setup *chunk.ScoreTrackSetupDataChunk
+	var setup chunk.ExclusiveContainer
 	var score *chunk.ScoreTrackChunk
 	var sequence *chunk.ScoreTrackSequenceDataChunk
 	mmf.Traverse(func(c chunk.Chunk) {
@@ -56,28 +55,20 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, loop, volume, gain, seqvol int) e
 			if ck.HasOptions {
 				data = ck
 			}
-		case *chunk.ScoreTrackSetupDataChunk:
-			n++
+		case chunk.ExclusiveContainer:
 			setup = ck
 		case *chunk.ScoreTrackChunk:
-			n++
 			score = ck
 		case *chunk.ScoreTrackSequenceDataChunk:
-			n++
 			sequence = ck
 		}
 	})
-	if setup == nil {
+	switch setup.(type) {
+	case nil:
 		return fmt.Errorf("Score track setup chunk not found")
-	}
-	if score == nil {
-		return fmt.Errorf("Score track chunk not found")
 	}
 	if sequence == nil {
 		return fmt.Errorf("Sequence data chunk not found")
-	}
-	if 3 < n {
-		return fmt.Errorf("Too many score/sequence chunks")
 	}
 	//
 	contentsInfo := []string{}
@@ -102,16 +93,18 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, loop, volume, gain, seqvol int) e
 	}
 	//
 	channelsToSplit := []enums.Channel{}
-	for ch, st := range score.ChannelStatus {
-		State.Channels[ch].KeyControlStatus = st.KeyControlStatus
-		if st.KeyControlStatus == enums.KeyControlStatus_Off {
-			channelsToSplit = append(channelsToSplit, ch)
+	if score != nil {
+		for ch, st := range score.ChannelStatus {
+			State.Channels[ch].KeyControlStatus = st.KeyControlStatus
+			if st.KeyControlStatus == enums.KeyControlStatus_Off {
+				channelsToSplit = append(channelsToSplit, ch)
+			}
 		}
 	}
 	sequence.AggregateUsage(channelsToSplit)
 	//
 	//fmt.Println("collecting voices")
-	for _, x := range setup.Exclusives {
+	for _, x := range setup.GetExclusives() {
 		switch x.Type {
 		case enums.ExclusiveType_VM5Voice:
 			v := x.VM5VoicePC
@@ -140,9 +133,16 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, loop, volume, gain, seqvol int) e
 	q.port.SendAllOff() // トーン設定時は発音をすべて停止
 	q.port.SendTones(State.ToneData())
 	//
-	timeBase := util.GCD(score.DurationTimeBase, score.GateTimeBase)
-	durationTickCycle := score.DurationTimeBase / timeBase
-	gateTickCycle := score.GateTimeBase / timeBase
+	var timeBase, durationTickCycle, gateTickCycle int
+	if score == nil {
+		timeBase = 20
+		durationTickCycle = 1
+		gateTickCycle = 1
+	} else {
+		timeBase = util.GCD(score.DurationTimeBase, score.GateTimeBase)
+		durationTickCycle = score.DurationTimeBase / timeBase
+		gateTickCycle = score.GateTimeBase / timeBase
+	}
 	fmt.Printf("common time base = %d msec\n", timeBase)
 	fmt.Printf("durationTickCycle = %d\n", durationTickCycle)
 	fmt.Printf("gateTickCycle = %d\n", gateTickCycle)
@@ -259,6 +259,8 @@ func (q *Sequencer) processEvent(sequence *chunk.ScoreTrackSequenceDataChunk, ga
 		toneID := State.GetToneIDByPC(cs.BankMSB, cs.BankLSB, cs.PC)
 		if 0 <= toneID {
 			cs.ToneID = toneID
+		} else {
+			fmt.Printf("Undefined or unsupported PC %d-%d-@%d\n", cs.BankMSB, cs.BankLSB, cs.PC)
 		}
 
 	case *event.OctaveShiftEvent:

@@ -225,8 +225,7 @@ func CreateEventSEQU(rdr io.Reader, rest *int, ctx *sequenceBuilderContext) (Eve
 				return nil, errors.WithStack(err)
 			}
 			*rest--
-			// @todo 仮
-			return &ControlChangeEvent{Channel: ch, CC: enums.CC_MonoOn, Value: int(value)}, nil
+			return &ControlChangeEvent{Channel: ch, CC: enums.CC_Expression, Value: int(value)}, nil
 		} else if msg == 0x37 {
 			var value uint8
 			err := binary.Read(rdr, binary.BigEndian, &value)
@@ -276,7 +275,7 @@ func CreateEventSEQU(rdr io.Reader, rest *int, ctx *sequenceBuilderContext) (Eve
 		}
 	} else {
 		ch := enums.Channel(sig >> 6)
-		note := enums.Note(sig&15) + enums.Note(sig>>4&3)*12
+		note := enums.Note(sig&15) + (enums.Note(sig>>4&3)+3)*12
 		gate, err := util.ReadVariableInt(false, rdr, rest)
 		if err != nil {
 			return nil, errors.WithStack(err)

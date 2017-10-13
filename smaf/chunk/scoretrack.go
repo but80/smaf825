@@ -23,12 +23,12 @@ type scoreTrackRawHeader struct {
 
 type ScoreTrackChunk struct {
 	*ChunkHeader     `json:"chunk_header"`
-	FormatType       enums.ScoreTrackFormatType   `json:"format_type"`
-	SequenceType     enums.ScoreTrackSequenceType `json:"sequence_type"`
-	DurationTimeBase int                          `json:"duration_time_base"`
-	GateTimeBase     int                          `json:"gate_time_base"`
-	ChannelStatus    []*subtypes.ChannelStatus    `json:"channel_status"`
-	SubChunks        []Chunk                      `json:"sub_chunks"`
+	FormatType       enums.ScoreTrackFormatType                `json:"format_type"`
+	SequenceType     enums.ScoreTrackSequenceType              `json:"sequence_type"`
+	DurationTimeBase int                                       `json:"duration_time_base"`
+	GateTimeBase     int                                       `json:"gate_time_base"`
+	ChannelStatus    map[enums.Channel]*subtypes.ChannelStatus `json:"channel_status"`
+	SubChunks        []Chunk                                   `json:"sub_chunks"`
 }
 
 func (c *ScoreTrackChunk) Traverse(fn func(Chunk)) {
@@ -41,8 +41,8 @@ func (c *ScoreTrackChunk) Traverse(fn func(Chunk)) {
 func (c *ScoreTrackChunk) String() string {
 	result := "ScoreTrackChunk: " + c.ChunkHeader.String()
 	chst := []string{}
-	for i, st := range c.ChannelStatus {
-		chst = append(chst, fmt.Sprintf("[%d] KeyControl=%s LED=%v Vibration=%v ChannelType=%s", i, st.KeyControlStatus, st.LEDStatus, st.VibrationStatus, st.ChannelType))
+	for ch, st := range c.ChannelStatus {
+		chst = append(chst, fmt.Sprintf("[%d] KeyControl=%s LED=%v Vibration=%v ChannelType=%s", ch, st.KeyControlStatus, st.LEDStatus, st.VibrationStatus, st.ChannelType))
 	}
 	sub := []string{
 		fmt.Sprintf("FormatType: %s", c.FormatType.String()),
@@ -103,28 +103,28 @@ func (c *ScoreTrackChunk) Read(rdr io.Reader) error {
 		if err != nil {
 			return errors.WithStack(err)
 		}
-		for i := 0; i < 4; i++ {
-			c.ChannelStatus = append(c.ChannelStatus, &subtypes.ChannelStatus{
+		for ch := enums.Channel(0); ch < 4; ch++ {
+			c.ChannelStatus[ch] = &subtypes.ChannelStatus{
 				KeyControlStatus: enums.KeyControlStatus((b >> 15 & 1) + 1),
 				VibrationStatus:  b>>14&1 != 0,
 				ChannelType:      enums.ChannelType(b >> 12 & 3),
-			})
+			}
 			b <<= 4
 		}
 	default:
 		var b uint8
-		for i := 0; i < 16; i++ {
+		for ch := enums.Channel(0); ch < 16; ch++ {
 			err := binary.Read(rdr, binary.BigEndian, &b)
 			rest--
 			if err != nil {
 				return errors.WithStack(err)
 			}
-			c.ChannelStatus = append(c.ChannelStatus, &subtypes.ChannelStatus{
+			c.ChannelStatus[ch] = &subtypes.ChannelStatus{
 				KeyControlStatus: enums.KeyControlStatus(b >> 6),
 				VibrationStatus:  b>>5&1 != 0,
 				LEDStatus:        b>>4&1 != 0,
 				ChannelType:      enums.ChannelType(b & 3),
-			})
+			}
 		}
 	}
 

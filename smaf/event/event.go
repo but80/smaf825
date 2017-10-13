@@ -30,17 +30,17 @@ func (ctx *sequenceBuilderContext) reset() {
 
 type Event interface {
 	fmt.Stringer
-	GetChannel() int
+	GetChannel() enums.Channel
 }
 
 type NoteEvent struct {
-	Channel  int        `json:"channel"`
-	Note     enums.Note `json:"note"`
-	Velocity int        `json:"velocity"`
-	GateTime int        `json:"gate_time"`
+	Channel  enums.Channel `json:"channel"`
+	Note     enums.Note    `json:"note"`
+	Velocity int           `json:"velocity"`
+	GateTime int           `json:"gate_time"`
 }
 
-func (e *NoteEvent) GetChannel() int {
+func (e *NoteEvent) GetChannel() enums.Channel {
 	return e.Channel
 }
 
@@ -49,12 +49,12 @@ func (e *NoteEvent) String() string {
 }
 
 type ControlChangeEvent struct {
-	Channel int      `json:"channel"`
-	CC      enums.CC `json:"cc"`
-	Value   int      `json:"value"`
+	Channel enums.Channel `json:"channel"`
+	CC      enums.CC      `json:"cc"`
+	Value   int           `json:"value"`
 }
 
-func (e *ControlChangeEvent) GetChannel() int {
+func (e *ControlChangeEvent) GetChannel() enums.Channel {
 	return e.Channel
 }
 
@@ -63,11 +63,11 @@ func (e *ControlChangeEvent) String() string {
 }
 
 type ProgramChangeEvent struct {
-	Channel int `json:"channel"`
-	PC      int `json:"pc"`
+	Channel enums.Channel `json:"channel"`
+	PC      int           `json:"pc"`
 }
 
-func (e *ProgramChangeEvent) GetChannel() int {
+func (e *ProgramChangeEvent) GetChannel() enums.Channel {
 	return e.Channel
 }
 
@@ -76,11 +76,11 @@ func (e *ProgramChangeEvent) String() string {
 }
 
 type PitchBendEvent struct {
-	Channel int `json:"channel"`
-	Value   int `json:"value"`
+	Channel enums.Channel `json:"channel"`
+	Value   int           `json:"value"`
 }
 
-func (e *PitchBendEvent) GetChannel() int {
+func (e *PitchBendEvent) GetChannel() enums.Channel {
 	return e.Channel
 }
 
@@ -89,11 +89,11 @@ func (e *PitchBendEvent) String() string {
 }
 
 type OctaveShiftEvent struct {
-	Channel int `json:"channel"`
-	Value   int `json:"value"`
+	Channel enums.Channel `json:"channel"`
+	Value   int           `json:"value"`
 }
 
-func (e *OctaveShiftEvent) GetChannel() int {
+func (e *OctaveShiftEvent) GetChannel() enums.Channel {
 	return e.Channel
 }
 
@@ -102,11 +102,11 @@ func (e *OctaveShiftEvent) String() string {
 }
 
 type FineTuneEvent struct {
-	Channel int `json:"channel"`
-	Value   int `json:"value"`
+	Channel enums.Channel `json:"channel"`
+	Value   int           `json:"value"`
 }
 
-func (e *FineTuneEvent) GetChannel() int {
+func (e *FineTuneEvent) GetChannel() enums.Channel {
 	return e.Channel
 }
 
@@ -118,7 +118,7 @@ type ExclusiveEvent struct {
 	Exclusive *subtypes.Exclusive `json:"exclusive"`
 }
 
-func (e *ExclusiveEvent) GetChannel() int {
+func (e *ExclusiveEvent) GetChannel() enums.Channel {
 	return 0
 }
 
@@ -129,7 +129,7 @@ func (e *ExclusiveEvent) String() string {
 type NopEvent struct {
 }
 
-func (e *NopEvent) GetChannel() int {
+func (e *NopEvent) GetChannel() enums.Channel {
 	return 0
 }
 
@@ -162,7 +162,7 @@ func CreateEventSEQU(rdr io.Reader, rest *int, ctx *sequenceBuilderContext) (Eve
 		}
 		*rest--
 
-		ch := int(sig >> 6)
+		ch := enums.Channel(sig >> 6)
 		msg := int(sig & 0x3f)
 		if msg == 0x00 {
 			var fine uint8
@@ -275,7 +275,7 @@ func CreateEventSEQU(rdr io.Reader, rest *int, ctx *sequenceBuilderContext) (Eve
 			return nil, errors.Errorf("Invalid event: 0x%02X%02X", sig, sig2)
 		}
 	} else {
-		ch := int(sig >> 6)
+		ch := enums.Channel(sig >> 6)
 		note := enums.Note(sig&15) + enums.Note(sig>>4&3)*12
 		gate, err := util.ReadVariableInt(false, rdr, rest)
 		if err != nil {
@@ -323,7 +323,7 @@ func CreateEventHPS(rdr io.Reader, rest *int, ctx *sequenceBuilderContext) (Even
 			return nil, errors.WithStack(err)
 		}
 		return &NoteEvent{
-			Channel:  int(sig >> 6),
+			Channel:  enums.Channel(sig >> 6),
 			Note:     enums.Note((oct+3)*12 + notenum),
 			Velocity: 127,
 			GateTime: gatetime,
@@ -336,7 +336,7 @@ func CreateEventHPS(rdr io.Reader, rest *int, ctx *sequenceBuilderContext) (Even
 	}
 	*rest--
 
-	ch := int(sig >> 6)
+	ch := enums.Channel(sig >> 6)
 	switch sig >> 4 & 3 {
 
 	case 3:
@@ -399,7 +399,7 @@ func CreateEvent(rdr io.Reader, rest *int, ctx *sequenceBuilderContext) (Event, 
 	}
 	*rest--
 
-	ch := int(sig & 0x0F)
+	ch := enums.Channel(sig & 0x0F)
 	switch sig & 0xF0 {
 
 	case 0x80, 0x90:

@@ -15,14 +15,14 @@ import (
 
 type ScoreTrackSequenceDataChunk struct {
 	*ChunkHeader      `json:"chunk_header"`
-	FormatType        enums.ScoreTrackFormatType `json:"format_type"`
-	Events            []event.DurationEventPair  `json:"events"`
-	IsChannelUsed     map[int]bool               `json:"-"`
-	UsedChannelCount  int                        `json:"-"`
-	UsedNoteCount     map[int]int                `json:"-"`
-	NoteToChannel     map[int]map[enums.Note]int `json:"-"`
-	ChannelToChannels map[int][]int              `json:"-"`
-	IgnoredPC         map[uint32]bool            `json:"-"`
+	FormatType        enums.ScoreTrackFormatType           `json:"format_type"`
+	Events            []event.DurationEventPair            `json:"events"`
+	IsChannelUsed     map[enums.Channel]bool               `json:"-"`
+	UsedChannelCount  int                                  `json:"-"`
+	UsedNoteCount     map[enums.Channel]int                `json:"-"`
+	NoteToChannel     map[enums.Channel]map[enums.Note]int `json:"-"`
+	ChannelToChannels map[enums.Channel][]int              `json:"-"`
+	IgnoredPC         map[uint32]bool                      `json:"-"`
 }
 
 func (c *ScoreTrackSequenceDataChunk) Traverse(fn func(Chunk)) {
@@ -88,10 +88,10 @@ func (c *ScoreTrackSequenceDataChunk) Read(rdr io.Reader) error {
 	return nil
 }
 
-func (c *ScoreTrackSequenceDataChunk) AggregateUsage(channelsToSplit []int) {
-	c.IsChannelUsed = map[int]bool{}
-	usedNotes := map[int]map[enums.Note]bool{}
-	pc := map[int]uint32{}
+func (c *ScoreTrackSequenceDataChunk) AggregateUsage(channelsToSplit []enums.Channel) {
+	c.IsChannelUsed = map[enums.Channel]bool{}
+	usedNotes := map[enums.Channel]map[enums.Note]bool{}
+	pc := map[enums.Channel]uint32{}
 	for _, e := range c.Events {
 		ch := e.Event.GetChannel()
 		switch evt := e.Event.(type) {
@@ -114,8 +114,8 @@ func (c *ScoreTrackSequenceDataChunk) AggregateUsage(channelsToSplit []int) {
 		}
 	}
 	// @todo Check available channel count
-	unusedChannels := []int{}
-	for ch := 0; ch < 16; ch++ {
+	unusedChannels := []enums.Channel{}
+	for ch := enums.Channel(0); ch < 16; ch++ {
 		if !c.IsChannelUsed[ch] {
 			unusedChannels = append(unusedChannels, ch)
 		}
@@ -125,24 +125,24 @@ func (c *ScoreTrackSequenceDataChunk) AggregateUsage(channelsToSplit []int) {
 	for range c.IsChannelUsed {
 		c.UsedChannelCount++
 	}
-	c.UsedNoteCount = map[int]int{}
+	c.UsedNoteCount = map[enums.Channel]int{}
 	for ch, n := range usedNotes {
 		for range n {
 			c.UsedNoteCount[ch]++
 		}
 	}
 	//
-	c.NoteToChannel = map[int]map[enums.Note]int{}
-	c.ChannelToChannels = map[int][]int{}
+	c.NoteToChannel = map[enums.Channel]map[enums.Note]int{}
+	c.ChannelToChannels = map[enums.Channel][]int{}
 	c.IgnoredPC = map[uint32]bool{}
 	for _, ch := range channelsToSplit {
 		if !c.IsChannelUsed[ch] {
 			continue
 		}
 		c.NoteToChannel[ch] = map[enums.Note]int{}
-		c.ChannelToChannels[ch] = []int{ch}
+		c.ChannelToChannels[ch] = []int{int(ch)}
 		for note := range usedNotes[ch] {
-			c.NoteToChannel[ch][note] = ch
+			c.NoteToChannel[ch][note] = int(ch)
 		}
 		first := true
 		for note := range usedNotes[ch] {
@@ -155,7 +155,7 @@ func (c *ScoreTrackSequenceDataChunk) AggregateUsage(channelsToSplit []int) {
 				c.NoteToChannel[ch][note] = -1
 				c.IgnoredPC[pc[ch]|uint32(note)] = true
 			} else {
-				chTo := unusedChannels[0]
+				chTo := int(unusedChannels[0])
 				unusedChannels = unusedChannels[1:]
 				c.NoteToChannel[ch][note] = chTo
 				c.ChannelToChannels[ch] = append(c.ChannelToChannels[ch], chTo)
@@ -172,16 +172,16 @@ func (c *ScoreTrackSequenceDataChunk) IsIgnoredPC(bankMSB, bankLSB, PC int, drum
 	return c.IgnoredPC[uint32(bankMSB)<<24|uint32(bankLSB)<<16|uint32(PC)<<8|uint32(drumNote)]
 }
 
-func (c *ScoreTrackSequenceDataChunk) ChannelTo(orgCh int, note enums.Note) int {
+func (c *ScoreTrackSequenceDataChunk) ChannelTo(orgCh enums.Channel, note enums.Note) int {
 	if c.NoteToChannel[orgCh] == nil {
-		return orgCh
+		return int(orgCh)
 	}
 	return c.NoteToChannel[orgCh][note]
 }
 
-func (c *ScoreTrackSequenceDataChunk) ChannelsTo(orgCh int) []int {
+func (c *ScoreTrackSequenceDataChunk) ChannelsTo(orgCh enums.Channel) []int {
 	if c.ChannelToChannels[orgCh] == nil {
-		return []int{orgCh}
+		return []int{int(orgCh)}
 	}
 	return c.ChannelToChannels[orgCh]
 }

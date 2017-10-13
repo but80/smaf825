@@ -101,7 +101,7 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, loop, volume, gain, seqvol int) e
 		fmt.Printf("\n=============== playing %s\n\n", strings.Join(contentsInfo, " - "))
 	}
 	//
-	channelsToSplit := []int{}
+	channelsToSplit := []enums.Channel{}
 	for ch, st := range score.ChannelStatus {
 		State.Channels[ch].KeyControlStatus = st.KeyControlStatus
 		if st.KeyControlStatus == enums.KeyControlStatus_Off {
@@ -163,7 +163,7 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, loop, volume, gain, seqvol int) e
 				State.Tick(func(ch int, notes []enums.Note) {
 					cs := State.Channels[ch]
 					for _, note := range notes {
-						chTo := sequence.ChannelTo(ch, note)
+						chTo := sequence.ChannelTo(enums.Channel(ch), note)
 						toneID := cs.ToneID
 						if cs.KeyControlStatus == enums.KeyControlStatus_Off {
 							toneID = State.GetToneIDByPCAndDrumNote(cs.BankMSB, cs.BankLSB, cs.PC, note)

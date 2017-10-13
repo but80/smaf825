@@ -21,7 +21,7 @@ func (c *MMMGVoiceChunk) Traverse(fn func(Chunk)) {
 }
 
 func (c *MMMGVoiceChunk) String() string {
-	result := c.ChunkHeader.String()
+	result := "MMMGVoiceChunk: " + c.ChunkHeader.String()
 	sub := []string{}
 	for _, chunk := range c.SubChunks {
 		sub = append(sub, chunk.String())

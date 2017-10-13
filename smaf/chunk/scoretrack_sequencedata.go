@@ -79,7 +79,6 @@ func (c *ScoreTrackSequenceDataChunk) Read(rdr io.Reader) error {
 		if err != nil {
 			return errors.Wrapf(err, "at 0x%X in Mtsq", int(c.Size)-rest)
 		}
-		fmt.Printf("%s\n", pair.Event.String())
 		if pair.Event == nil {
 			break
 		}

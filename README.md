@@ -7,9 +7,16 @@ SMAFフォーマットの着メロを Arduino + YMF825Board で再生するプ�
 1. [Go 1.8 をインストール](https://golang.org/dl/) してください。
 2. `go get -u github.com/mersenne-sister/smaf825` にて、当プロジェクトをcloneしてください。
    CLIコマンド `smaf825` が同時にインストールされますので、ためしに引数なしで実行してみてください。
-3. 以下の記事を参考にハードウェアを用意し、まずは記事通りに公式サンプルを鳴らしてみてください。
+3. 以下のようにして、お手元のMMFファイルが正しくダンプされるかを確認してください。
+   
+   ```bash
+   smaf825 dump music.mmf
+   
+   smaf825 dump -j music.mmf # JSON形式でもダンプできます
+   ```
+4. 以下の記事を参考にハードウェアを用意し、まずは記事通りに公式サンプルを鳴らしてみてください。
    - [YMF825BoardをArduinoで鳴らしてみる](https://fabble.cc/yamahafsm/ymf825boardarduino)
-4. 無事動作したら、当プロジェクトの [bridge/bridge.ino](bridge/bridge.ino) を参考記事と同様の方法でArduinoに転送してください。
+5. 無事動作したら、当プロジェクトの [bridge/bridge.ino](bridge/bridge.ino) を参考記事と同様の方法でArduinoに転送してください。
 
 ## SMAFの再生
 

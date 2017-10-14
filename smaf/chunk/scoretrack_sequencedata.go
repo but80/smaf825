@@ -70,11 +70,15 @@ func (c *ScoreTrackSequenceDataChunk) Read(rdr io.Reader) error {
 			if err == nil {
 				pair.Event, err = event.CreateEventSEQU(rdr, &rest, ctx)
 			}
-		default:
+		case enums.ScoreTrackFormatType_MobileStandardNonCompressed:
 			pair.Duration, err = util.ReadVariableInt(true, rdr, &rest)
 			if err == nil {
 				pair.Event, err = event.CreateEvent(rdr, &rest, ctx)
 			}
+		case enums.ScoreTrackFormatType_MobileStandardCompressed:
+			return fmt.Errorf("ScoreTrackFormatType_MobileStandardCompressed is unsupported")
+		default:
+			return fmt.Errorf("Unsupported FormatType")
 		}
 		if err != nil {
 			return errors.Wrapf(err, "at 0x%X in Mtsq", int(c.Size)-rest)

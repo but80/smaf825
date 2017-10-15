@@ -3,8 +3,8 @@ package subcmd
 import (
 	"os"
 
-	"github.com/mersenne-sister/smaf825/sequencer"
-	"github.com/mersenne-sister/smaf825/smaf/chunk"
+	"github.com/but80/smaf825/sequencer"
+	"github.com/but80/smaf825/smaf/chunk"
 	"github.com/urfave/cli"
 )
 

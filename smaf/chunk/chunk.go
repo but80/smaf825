@@ -8,8 +8,8 @@ import (
 
 	"encoding/json"
 
-	"github.com/mersenne-sister/smaf825/smaf/enums"
-	"github.com/mersenne-sister/smaf825/smaf/subtypes"
+	"github.com/but80/smaf825/smaf/enums"
+	"github.com/but80/smaf825/smaf/subtypes"
 	"github.com/pkg/errors"
 )
 

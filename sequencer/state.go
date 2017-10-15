@@ -6,8 +6,8 @@ import (
 	"sort"
 
 	"github.com/ahmetalpbalkan/go-cursor"
-	"github.com/mersenne-sister/smaf825/smaf/enums"
-	"github.com/mersenne-sister/smaf825/smaf/voice"
+	"github.com/but80/smaf825/smaf/enums"
+	"github.com/but80/smaf825/smaf/voice"
 )
 
 // @todo Rename

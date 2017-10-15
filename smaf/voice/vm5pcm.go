@@ -5,7 +5,7 @@ import (
 	"io"
 	"unsafe"
 
-	"github.com/mersenne-sister/smaf825/smaf/util"
+	"github.com/but80/smaf825/smaf/util"
 	"github.com/pkg/errors"
 )
 

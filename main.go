@@ -5,7 +5,7 @@ import (
 
 	"os"
 
-	"github.com/mersenne-sister/smaf825/subcmd"
+	"github.com/but80/smaf825/subcmd"
 )
 
 var version = "0.0.1"

@@ -7,8 +7,8 @@ import (
 
 	"strings"
 
-	"github.com/mersenne-sister/smaf825/smaf/chunk"
-	"github.com/mersenne-sister/smaf825/smaf/voice"
+	"github.com/but80/smaf825/smaf/chunk"
+	"github.com/but80/smaf825/smaf/voice"
 	"github.com/urfave/cli"
 )
 

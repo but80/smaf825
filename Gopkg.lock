@@ -3,6 +3,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/32bitkid/bitreader"
+  packages = ["."]
+  revision = "c3a4602970db130ce14ca8d1e502241507bb426d"
+
+[[projects]]
+  branch = "master"
   name = "github.com/ahmetalpbalkan/go-cursor"
   packages = ["."]
   revision = "8136607ea412c5ae8b684cf60ae91f9b4127cae2"
@@ -40,6 +46,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e2ad8c131c9b2a090f89f941d02f3b7d9e81ddc7806979ca5127d5600657ee3d"
+  inputs-digest = "f934b6b53ea9a87d03fa612811e2950e23d7eecf286b9ad96e6c1267105afc53"
   solver-name = "gps-cdcl"
   solver-version = 1

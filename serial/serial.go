@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/jacobsa/go-serial/serial"
 	"github.com/but80/smaf825/smaf/enums"
 	"github.com/but80/smaf825/smaf/voice"
+	"github.com/jacobsa/go-serial/serial"
 	"github.com/pkg/errors"
 	"github.com/xlab/closer"
 )

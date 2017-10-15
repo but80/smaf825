@@ -9,6 +9,7 @@ import (
 
 	"github.com/but80/smaf825/smaf/enums"
 	"github.com/but80/smaf825/smaf/event"
+	"github.com/but80/smaf825/smaf/huffman"
 	"github.com/but80/smaf825/smaf/util"
 	"github.com/pkg/errors"
 )
@@ -42,6 +43,9 @@ func (c *ScoreTrackSequenceDataChunk) String() string {
 }
 
 func (c *ScoreTrackSequenceDataChunk) Read(rdr io.Reader) error {
+	if c.FormatType == enums.ScoreTrackFormatType_MobileStandardCompressed {
+		rdr = huffman.NewHuffmanReader(rdr)
+	}
 	c.Events = []event.DurationEventPair{}
 	rest := int(c.Size)
 	ctx := event.NewSequenceBuilderContext()
@@ -70,13 +74,11 @@ func (c *ScoreTrackSequenceDataChunk) Read(rdr io.Reader) error {
 			if err == nil {
 				pair.Event, err = event.CreateEventSEQU(rdr, &rest, ctx)
 			}
-		case enums.ScoreTrackFormatType_MobileStandardNonCompressed:
+		case enums.ScoreTrackFormatType_MobileStandardNonCompressed, enums.ScoreTrackFormatType_MobileStandardCompressed:
 			pair.Duration, err = util.ReadVariableInt(true, rdr, &rest)
 			if err == nil {
 				pair.Event, err = event.CreateEvent(rdr, &rest, ctx)
 			}
-		case enums.ScoreTrackFormatType_MobileStandardCompressed:
-			return fmt.Errorf("ScoreTrackFormatType_MobileStandardCompressed is unsupported")
 		default:
 			return fmt.Errorf("Unsupported FormatType")
 		}

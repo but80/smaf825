@@ -54,28 +54,28 @@ func (x *Exclusive) Read(rdr io.Reader, rest *int) error {
 	} else {
 		var l uint8
 		err = binary.Read(rdr, binary.BigEndian, &l)
+		*rest--
 		length = int(l)
 	}
 	if err != nil {
 		return errors.WithStack(err)
 	}
 	length--
-	*rest--
 	x.Data = make([]uint8, length)
-	err = binary.Read(rdr, binary.BigEndian, &x.Data)
+	_, err = rdr.Read(x.Data)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	*rest -= len(x.Data)
+	*rest -= length
 	var end uint8
 	err = binary.Read(rdr, binary.BigEndian, &end)
 	if err != nil {
 		return errors.WithStack(err)
 	}
+	*rest--
 	if end != 0xF7 {
 		return errors.Errorf("Invalid end mark: 0x%02X", end)
 	}
-	*rest--
 	//
 	if 10 <= len(x.Data) && x.Data[0] == 0x43 && x.Data[1] == 0x79 && x.Data[2] == 0x07 && x.Data[3] == 0x7F && x.Data[4] == 0x01 {
 		x.Type = enums.ExclusiveType_VM5Voice

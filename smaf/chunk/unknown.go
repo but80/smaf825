@@ -27,7 +27,7 @@ func (c *UnknownChunk) Read(rdr io.Reader) error {
 		return err
 	}
 	if n < len(c.Stream) {
-		return errors.Errorf("Cannot read enough byte length specified in chunk header")
+		return errors.Errorf("Cannot read enough byte length specified in chunk header (%d < %d)", n, len(c.Stream))
 	}
 	return nil
 }

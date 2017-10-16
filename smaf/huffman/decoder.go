@@ -98,19 +98,36 @@ func NewHuffmanReader(rdr io.Reader) *HuffmanReader {
 	}
 }
 
-func (r *HuffmanReader) Read(p []byte) (n int, err error) {
-	if r.buf == nil {
-		var size uint32
-		err = binary.Read(r.reader, binary.BigEndian, &size)
-		if err != nil {
-			return 0, errors.WithStack(err)
-		}
-		r.buf = make([]byte, size)
-		_, err = r.decoder.Read(r.buf)
-		if err != nil {
-			return 0, errors.WithStack(err)
-		}
-		//fmt.Printf("%s\n", util.Hex(r.buf))
+func (r *HuffmanReader) cache() error {
+	if r.buf != nil {
+		return nil
+	}
+	var size uint32
+	err := binary.Read(r.reader, binary.BigEndian, &size)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	r.buf = make([]byte, size)
+	_, err = r.decoder.Read(r.buf)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	//fmt.Printf("%s\n", util.Hex(r.buf))
+	return nil
+}
+
+func (r *HuffmanReader) Rest() (int, error) {
+	err := r.cache()
+	if err != nil {
+		return 0, errors.WithStack(err)
+	}
+	return len(r.buf), nil
+}
+
+func (r *HuffmanReader) Read(p []byte) (int, error) {
+	err := r.cache()
+	if err != nil {
+		return 0, errors.WithStack(err)
 	}
 	size := len(p)
 	var eof error

@@ -43,11 +43,17 @@ func (c *ScoreTrackSequenceDataChunk) String() string {
 }
 
 func (c *ScoreTrackSequenceDataChunk) Read(rdr io.Reader) error {
+	var err error
+	rest := int(c.Size)
 	if c.FormatType == enums.ScoreTrackFormatType_MobileStandardCompressed {
-		rdr = huffman.NewHuffmanReader(rdr)
+		hrdr := huffman.NewHuffmanReader(rdr)
+		rdr = hrdr
+		rest, err = hrdr.Rest()
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	}
 	c.Events = []event.DurationEventPair{}
-	rest := int(c.Size)
 	ctx := event.NewSequenceBuilderContext()
 	for 1 <= rest {
 		if 4 == rest {
@@ -62,7 +68,6 @@ func (c *ScoreTrackSequenceDataChunk) Read(rdr io.Reader) error {
 			return errors.Errorf("Invalid event: 0x%08X at last", eos)
 		}
 		var pair event.DurationEventPair
-		var err error
 		switch c.FormatType {
 		case enums.ScoreTrackFormatType_HandyPhoneStandard:
 			pair.Duration, err = util.ReadVariableInt(false, rdr, &rest)

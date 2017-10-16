@@ -40,7 +40,7 @@ func (c *ScoreTrackSetupDataChunk) String() string {
 
 func (c *ScoreTrackSetupDataChunk) Read(rdr io.Reader) error {
 	rest := int(c.Size)
-	for 2 <= rest {
+	for 1 <= rest {
 		var sig uint8
 		err := binary.Read(rdr, binary.BigEndian, &sig)
 		if err != nil {
@@ -54,6 +54,9 @@ func (c *ScoreTrackSetupDataChunk) Read(rdr io.Reader) error {
 			}
 			rest--
 		}
+		if rest == 0 {
+			break
+		}
 		switch sig {
 		case 0xF0:
 			ex := subtypes.NewExclusive(false)
@@ -66,11 +69,14 @@ func (c *ScoreTrackSetupDataChunk) Read(rdr io.Reader) error {
 				return errors.WithStack(err)
 			}
 			if n < len(c.UnknownStream) {
-				return errors.Errorf("Cannot read enough byte length specified in chunk header")
+				return errors.Errorf("Cannot read enough byte length specified in chunk header (%d < %d)", n, len(c.UnknownStream))
 			}
 			rest -= len(c.UnknownStream)
 			c.UnknownStream = append([]uint8{sig}, c.UnknownStream...)
 		}
+	}
+	if rest != 0 {
+		return errors.Errorf("Chunk size mismatch (%d != %d)", int(c.Size)-rest, c.Size)
 	}
 	return nil
 }

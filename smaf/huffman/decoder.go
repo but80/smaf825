@@ -8,17 +8,15 @@ import (
 
 	"encoding/binary"
 
-	"github.com/32bitkid/bitreader"
 	"github.com/pkg/errors"
 )
 
 const (
-	n        = 256
-	charbits = 8
+	n = 256
 )
 
 type HuffmanDecoder struct {
-	reader      bitreader.BitReader
+	reader      *BitReader
 	avail       int
 	left, right [2*n - 1]int
 }
@@ -45,7 +43,7 @@ func (d *HuffmanDecoder) readtree() (int, error) {
 		}
 		return i, nil // return node
 	} else {
-		value, err := d.reader.Read32(charbits)
+		value, err := d.reader.ReadUint8()
 		if err != nil {
 			return -1, errors.WithStack(err)
 		}
@@ -83,17 +81,19 @@ func (d *HuffmanDecoder) Read(p []byte) (int, error) {
 
 func NewHuffmanDecoder(rdr io.Reader) *HuffmanDecoder {
 	return &HuffmanDecoder{
-		reader: bitreader.NewBitReader(rdr),
+		reader: NewBitReader(rdr),
 	}
 }
 
 type HuffmanReader struct {
+	reader  io.Reader
 	decoder *HuffmanDecoder
 	buf     []byte
 }
 
 func NewHuffmanReader(rdr io.Reader) *HuffmanReader {
 	return &HuffmanReader{
+		reader:  rdr,
 		decoder: NewHuffmanDecoder(rdr),
 	}
 }
@@ -101,7 +101,7 @@ func NewHuffmanReader(rdr io.Reader) *HuffmanReader {
 func (r *HuffmanReader) Read(p []byte) (n int, err error) {
 	if r.buf == nil {
 		var size uint32
-		err = binary.Read(r.decoder.reader, binary.BigEndian, &size)
+		err = binary.Read(r.reader, binary.BigEndian, &size)
 		if err != nil {
 			return 0, errors.WithStack(err)
 		}

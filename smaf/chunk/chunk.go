@@ -16,7 +16,7 @@ import (
 type Signature uint32
 
 func (s Signature) String() string {
-	return fmt.Sprintf("%c%c%c%c", s>>24, s>>16&255, s>>8&255, s&255)
+	return fmt.Sprintf("%c%c%c%c=0x%08X", s>>24, s>>16&255, s>>8&255, s&255, uint32(s))
 }
 
 func (s Signature) MarshalJSON() ([]byte, error) {
@@ -98,7 +98,7 @@ func (hdr *ChunkHeader) CreateChunk(rdr io.Reader, formatType enums.ScoreTrackFo
 	}
 	err := chunk.Read(rdr)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Creating %T (0x%08X)", chunk, hdr.Signature)
+		return nil, errors.Wrapf(err, "Creating %T (%s)", chunk, hdr.Signature.String())
 	}
 	return chunk, nil
 }

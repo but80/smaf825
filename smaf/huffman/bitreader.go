@@ -40,15 +40,12 @@ func (r *BitReader) ReadBit() (bool, error) {
 }
 
 func (r *BitReader) ReadUint8() (uint8, error) {
-	var b uint8
-	err := binary.Read(r.reader, binary.LittleEndian, &b)
+	var buf2 uint8
+	err := binary.Read(r.reader, binary.LittleEndian, &buf2)
 	if err != nil {
 		return 0, errors.WithStack(err)
 	}
-	result := r.buf
-	if r.rest != 0 {
-		result |= b >> uint(r.rest)
-		r.buf = b << uint(8-r.rest)
-	}
+	result := r.buf | buf2 >> uint(r.rest)
+	r.buf = buf2 << uint(8-r.rest)
 	return result, nil
 }

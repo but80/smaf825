@@ -95,6 +95,10 @@ func (c *ScoreTrackChunk) Read(rdr io.Reader) error {
 	c.DurationTimeBase = timeBase(rawHeader.TimebaseD)
 	c.GateTimeBase = timeBase(rawHeader.TimebaseG)
 
+	if !c.FormatType.IsSupported() {
+		return fmt.Errorf("Unsupported FormatType %d", int(c.FormatType))
+	}
+
 	c.ChannelStatus = map[enums.Channel]*subtypes.ChannelStatus{}
 	switch c.FormatType {
 	case enums.ScoreTrackFormatType_HandyPhoneStandard:

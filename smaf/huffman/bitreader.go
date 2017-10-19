@@ -45,7 +45,7 @@ func (r *BitReader) ReadUint8() (uint8, error) {
 	if err != nil {
 		return 0, errors.WithStack(err)
 	}
-	result := r.buf | buf2 >> uint(r.rest)
+	result := r.buf | buf2>>uint(r.rest)
 	r.buf = buf2 << uint(8-r.rest)
 	return result, nil
 }

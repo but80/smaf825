@@ -15,6 +15,14 @@ const (
 	ScoreTrackFormatType_Default = ScoreTrackFormatType_HandyPhoneStandard
 )
 
+func (t ScoreTrackFormatType) IsSupported() bool {
+	switch t {
+	case ScoreTrackFormatType_HandyPhoneStandard, ScoreTrackFormatType_MobileStandardCompressed, ScoreTrackFormatType_MobileStandardNonCompressed:
+		return true
+	}
+	return false
+}
+
 func (t ScoreTrackFormatType) String() string {
 	s := "undefined"
 	switch t {

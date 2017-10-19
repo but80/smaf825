@@ -84,8 +84,6 @@ func (c *ScoreTrackSequenceDataChunk) Read(rdr io.Reader) error {
 			if err == nil {
 				pair.Event, err = event.CreateEvent(rdr, &rest, ctx)
 			}
-		default:
-			return fmt.Errorf("Unsupported FormatType")
 		}
 		if err != nil {
 			return errors.Wrapf(err, "at 0x%X in Mtsq", int(c.Size)-rest)

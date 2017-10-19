@@ -82,7 +82,7 @@ func (c *FileChunk) Read(rdr io.Reader) error {
 
 	rest := int(c.ChunkHeader.Size)
 
-	for 8 <= rest {
+	for 10 <= rest {
 		var hdr ChunkHeader
 		from := int(c.ChunkHeader.Size) - rest + int(unsafe.Sizeof(c.ChunkHeader))
 		err := hdr.Read(rdr, &rest)
@@ -95,6 +95,12 @@ func (c *FileChunk) Read(rdr io.Reader) error {
 			return errors.Wrapf(err, "at 0x%X -> 0x%X", from, to)
 		}
 		c.SubChunks = append(c.SubChunks, sub)
+	}
+
+	rest -= 2
+
+	if rest != 0 {
+		return fmt.Errorf("Size mismatch (want %d, got %d)", int(c.ChunkHeader.Size), int(c.ChunkHeader.Size)-rest)
 	}
 
 	return nil
@@ -117,11 +123,7 @@ func NewFileChunk(file string) (*FileChunk, error) {
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	fi, err := fh.Stat()
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	c.CRCGot, err = calcCRC(fh, int(fi.Size())-2)
+	c.CRCGot, err = calcCRC(fh, int(unsafe.Sizeof(c.ChunkHeader))+int(c.Size)-2)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

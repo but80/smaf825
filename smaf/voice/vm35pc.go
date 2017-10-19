@@ -11,13 +11,14 @@ import (
 	"github.com/pkg/errors"
 )
 
-type VM5Voice interface {
+type VM35Voice interface {
 	fmt.Stringer
 	Read(rdr io.Reader, rest *int) error
 	ReadUnusedRest(rdr io.Reader, rest *int) error
 }
 
-type VM5VoicePC struct {
+type VM35VoicePC struct {
+	IsVM5     bool            `json:"is_vm5"`
 	Name      string          `json:"name"`
 	Flag      int             `json:"-"` // = 0x24
 	BankMSB   int             `json:"bank_msb"`
@@ -26,7 +27,18 @@ type VM5VoicePC struct {
 	DrumNote  enums.Note      `json:"drum_note"`
 	Enigma1   int             `json:"-"`
 	VoiceType enums.VoiceType `json:"voice_type"`
-	Voice     VM5Voice        `json:"voice"`
+	Voice     VM35Voice       `json:"voice"`
+}
+
+type vm3VoicePCHeaderRawData struct {
+	Enigma1   uint16
+	Flag      uint8
+	BankMSB   uint8
+	BankLSB   uint8
+	PC        uint8
+	DrumNote  uint8
+	VoiceType uint8 // bit0: 0=Type=FM 1=Type=PCM
+	Name      [16]byte
 }
 
 type vm5VoicePCHeaderRawData struct {
@@ -40,28 +52,45 @@ type vm5VoicePCHeaderRawData struct {
 	VoiceType uint8 // bit0: 0=Type=FM 1=Type=PCM
 }
 
-func (p *VM5VoicePC) Read(rdr io.Reader, rest *int) error {
-	var data vm5VoicePCHeaderRawData
-	err := binary.Read(rdr, binary.BigEndian, &data)
-	if err != nil {
-		return errors.WithStack(err)
+func (p *VM35VoicePC) Read(rdr io.Reader, rest *int) error {
+	if p.IsVM5 {
+		var data vm5VoicePCHeaderRawData
+		err := binary.Read(rdr, binary.BigEndian, &data)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		*rest -= int(unsafe.Sizeof(data))
+		p.Name = util.ZeroPadSliceToString(data.Name[:])
+		p.Flag = int(data.Flag)
+		p.BankMSB = int(data.BankMSB)
+		p.BankLSB = int(data.BankLSB)
+		p.PC = int(data.PC)
+		p.DrumNote = enums.Note(data.DrumNote)
+		p.Enigma1 = int(data.Enigma1)
+		p.VoiceType = enums.VoiceType(data.VoiceType)
+	} else {
+		var data vm3VoicePCHeaderRawData
+		err := binary.Read(rdr, binary.BigEndian, &data)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		*rest -= int(unsafe.Sizeof(data))
+		p.Name = util.ZeroPadSliceToString(data.Name[:])
+		p.Flag = int(data.Flag)
+		p.BankMSB = int(data.BankMSB)
+		p.BankLSB = int(data.BankLSB)
+		p.PC = int(data.PC)
+		p.DrumNote = enums.Note(data.DrumNote)
+		p.Enigma1 = int(data.Enigma1)
+		p.VoiceType = enums.VoiceType(data.VoiceType)
 	}
-	*rest -= int(unsafe.Sizeof(data))
-	p.Name = util.ZeroPadSliceToString(data.Name[:])
-	p.Flag = int(data.Flag)
-	p.BankMSB = int(data.BankMSB)
-	p.BankLSB = int(data.BankLSB)
-	p.PC = int(data.PC)
-	p.DrumNote = enums.Note(data.DrumNote)
-	p.Enigma1 = int(data.Enigma1)
-	p.VoiceType = enums.VoiceType(data.VoiceType)
 	switch p.VoiceType {
 	case enums.VoiceType_FM:
-		p.Voice = &VM5FMVoice{}
+		p.Voice = &VM35FMVoice{}
 		p.Voice.Read(rdr, rest)
 		p.Voice.ReadUnusedRest(rdr, rest)
 	case enums.VoiceType_PCM:
-		p.Voice = &VM5PCMVoice{}
+		p.Voice = &VM35PCMVoice{}
 		p.Voice.Read(rdr, rest)
 	//case enums.VoiceType_AL:
 	default:
@@ -70,11 +99,11 @@ func (p *VM5VoicePC) Read(rdr io.Reader, rest *int) error {
 	return nil
 }
 
-func (p *VM5VoicePC) IsForDrum() bool {
+func (p *VM35VoicePC) IsForDrum() bool {
 	return p.DrumNote != 0
 }
 
-func (p *VM5VoicePC) String() string {
+func (p *VM35VoicePC) String() string {
 	// fmt.Sprintf("Flag: 0x%02X", v.Flag)
 	// fmt.Sprintf("Enigma1: 0x%04X", v.Enigma1)
 	// fmt.Sprintf("Enigma2: 0x%08X", v.Enigma2)

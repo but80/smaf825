@@ -19,7 +19,7 @@ type Exclusive struct {
 	Type           enums.ExclusiveType `json:"type"`
 	VoiceType      enums.VoiceType     `json:"voice_type,omitempty"`
 	VMAVoicePC     *voice.VMAVoicePC   `json:"vma_voice_pc,omitempty"`
-	VM5VoicePC     *voice.VM5VoicePC   `json:"vm5_voice_pc,omitempty"`
+	VM35VoicePC    *voice.VM35VoicePC  `json:"vm35_voice_pc,omitempty"`
 	Data           []uint8             `json:"data"`
 }
 
@@ -34,8 +34,8 @@ func NewExclusive(variableLength bool) *Exclusive {
 func (x *Exclusive) String() string {
 	result := fmt.Sprintf("Exclusive %s (%d bytes)", util.Hex(x.Data), len(x.Data))
 	sub := []string{}
-	if x.VM5VoicePC != nil {
-		sub = append(sub, x.VM5VoicePC.String())
+	if x.VM35VoicePC != nil {
+		sub = append(sub, x.VM35VoicePC.String())
 	}
 	if x.VMAVoicePC != nil {
 		sub = append(sub, x.VMAVoicePC.String())
@@ -78,12 +78,12 @@ func (x *Exclusive) Read(rdr io.Reader, rest *int) error {
 	}
 	//
 	if 10 <= len(x.Data) && x.Data[0] == 0x43 && x.Data[1] == 0x79 && x.Data[2] == 0x07 && x.Data[3] == 0x7F && x.Data[4] == 0x01 {
-		x.Type = enums.ExclusiveType_VM5Voice
+		x.Type = enums.ExclusiveType_VM35Voice
 		x.VoiceType = enums.VoiceType(x.Data[9])
 		if x.VoiceType == enums.VoiceType_FM {
-			v, err := voice.NewVM5FMVoice(x.Data[10:])
+			v, err := voice.NewVM35FMVoice(x.Data[10:])
 			if err == nil {
-				x.VM5VoicePC = &voice.VM5VoicePC{
+				x.VM35VoicePC = &voice.VM35VoicePC{
 					BankMSB:  int(x.Data[5]),
 					BankLSB:  int(x.Data[6]),
 					PC:       int(x.Data[7]),
@@ -91,17 +91,17 @@ func (x *Exclusive) Read(rdr io.Reader, rest *int) error {
 					Voice:    v,
 				}
 			} else {
-				fmt.Printf("VM5 voice exclusive error: %s: %s\n", err.Error(), util.Hex(x.Data))
+				fmt.Printf("VM3/VM5 voice exclusive error: %s: %s\n", err.Error(), util.Hex(x.Data))
 			}
 		} else {
 			fmt.Printf("Unsupported voice type: %s\n", x.VoiceType.String())
 		}
 	} else if 3 <= len(x.Data) && x.Data[0] == 0x43 && x.Data[1] == 0x05 && x.Data[2] == 0x01 {
-		x.Type = enums.ExclusiveType_VM5Voice
+		x.Type = enums.ExclusiveType_VM35Voice
 		x.VoiceType = enums.VoiceType_FM
-		v, err := voice.NewVM5FMVoice(x.Data[5:])
+		v, err := voice.NewVM35FMVoice(x.Data[5:])
 		if err == nil {
-			x.VM5VoicePC = &voice.VM5VoicePC{
+			x.VM35VoicePC = &voice.VM35VoicePC{
 				BankMSB:  0,
 				BankLSB:  int(x.Data[3]),
 				PC:       int(x.Data[4]),
@@ -109,7 +109,7 @@ func (x *Exclusive) Read(rdr io.Reader, rest *int) error {
 				Voice:    v,
 			}
 		} else {
-			fmt.Printf("VM5 voice exclusive error: %s: %s\n", err.Error(), util.Hex(x.Data))
+			fmt.Printf("VM3/VM5 voice exclusive error: %s: %s\n", err.Error(), util.Hex(x.Data))
 		}
 	} else if 3 <= len(x.Data) && x.Data[0] == 0x43 && x.Data[1] == 0x03 {
 		x.Type = enums.ExclusiveType_VMAVoice

@@ -106,15 +106,15 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, loop, volume, gain, seqvol int) e
 	//fmt.Println("collecting voices")
 	for _, x := range setup.GetExclusives() {
 		switch x.Type {
-		case enums.ExclusiveType_VM5Voice:
-			v := x.VM5VoicePC
+		case enums.ExclusiveType_VM35Voice:
+			v := x.VM35VoicePC
 			if v != nil && !sequence.IsIgnoredPC(v.BankMSB, v.BankLSB, v.PC, v.DrumNote) {
 				State.AddTone(v)
 			}
 		case enums.ExclusiveType_VMAVoice:
 			v := x.VMAVoicePC
 			if v != nil {
-				State.AddTone(v.ToVM5())
+				State.AddTone(v.ToVM35())
 			}
 		}
 	}
@@ -236,7 +236,7 @@ func (q *Sequencer) processEvent(sequence *chunk.ScoreTrackSequenceDataChunk, ga
 		if cs.KeyControlStatus == enums.KeyControlStatus_Off {
 			toneID = State.GetToneIDByPCAndDrumNote(cs.BankMSB, cs.BankLSB, cs.PC, note)
 			if 0 <= toneID {
-				note = State.Tones[toneID].Voice.(*voice.VM5FMVoice).DrumKey
+				note = State.Tones[toneID].Voice.(*voice.VM35FMVoice).DrumKey
 			}
 		}
 		if 0 <= toneID {
@@ -315,7 +315,7 @@ func Test(deviceName string) error {
 	// http://madscient.hatenablog.jp/entry/2017/08/13/013913
 	// https://github.com/yamaha-webmusic/ymf825board/blob/master/manual/fbd_spec1.md#initialization-procedure
 
-	v, _ := voice.NewVM5FMVoice([]byte{
+	v, _ := voice.NewVM35FMVoice([]byte{
 		//0x01, 0x85,
 		//0x00, 0x7F, 0xF4, 0xBB, 0x00, 0x10, 0x40,
 		//0x00, 0xAF, 0xA0, 0x0E, 0x03, 0x10, 0x40,
@@ -331,7 +331,7 @@ func Test(deviceName string) error {
 	})
 
 	sp.SendAllOff() // トーン設定時は発音をすべて停止
-	sp.SendTones([]*voice.VM5FMVoice{v})
+	sp.SendTones([]*voice.VM35FMVoice{v})
 
 	ch := 0
 

@@ -90,7 +90,7 @@ func (cs *ChannelState) Print(num int) {
 	)
 }
 
-type Tones []*voice.VM5VoicePC
+type Tones []*voice.VM35VoicePC
 
 func (t Tones) Len() int {
 	return len(t)
@@ -114,15 +114,15 @@ type SequencerState struct {
 	Tones    Tones
 }
 
-func (ss *SequencerState) AddTone(pc *voice.VM5VoicePC) {
+func (ss *SequencerState) AddTone(pc *voice.VM35VoicePC) {
 	ss.Tones = append(ss.Tones, pc)
 }
 
-func (ss *SequencerState) ToneData() []*voice.VM5FMVoice {
+func (ss *SequencerState) ToneData() []*voice.VM35FMVoice {
 	sort.Sort(ss.Tones)
-	tones := []*voice.VM5FMVoice{}
+	tones := []*voice.VM35FMVoice{}
 	for _, t := range ss.Tones {
-		tones = append(tones, t.Voice.(*voice.VM5FMVoice))
+		tones = append(tones, t.Voice.(*voice.VM35FMVoice))
 	}
 	if 16 < len(tones) {
 		fmt.Printf("Too many tones (%d)\n", len(tones))
@@ -179,7 +179,7 @@ func (ss *SequencerState) Print() {
 var State = SequencerState{Channels: [16]*ChannelState{}}
 
 func init() {
-	State.Tones = []*voice.VM5VoicePC{}
+	State.Tones = []*voice.VM35VoicePC{}
 	for i := 0; i < 16; i++ {
 		State.Channels[i] = &ChannelState{
 			GateTimeRest: map[enums.Note]int{},

@@ -103,12 +103,12 @@ func (op *VMAFMOperator) String() string {
 	return fmt.Sprintf("Op #%d: MULT=%s\n", op.Num+1, op.MULT) + util.Indent(s, "\t")
 }
 
-func (op *VMAFMOperator) ToVM5(fb int) *VM5FMOperator {
+func (op *VMAFMOperator) ToVM35(fb int) *VM35FMOperator {
 	sr := op.RR
 	if op.EGT {
 		sr = 0
 	}
-	return &VM5FMOperator{
+	return &VM35FMOperator{
 		Num:   op.Num,
 		MULTI: op.MULT,
 		DT:    0,
@@ -221,19 +221,19 @@ func (v *VMAFMVoice) String() string {
 	return strings.Join(s, "\n")
 }
 
-func (v *VMAFMVoice) ToVM5() *VM5FMVoice {
-	result := &VM5FMVoice{
+func (v *VMAFMVoice) ToVM35() *VM35FMVoice {
+	result := &VM35FMVoice{
 		DrumKey:   enums.Note(0),
 		PANPOT:    enums.Panpot_Center,
 		BO:        enums.BasicOctave_Normal,
 		LFO:       v.LFO,
 		PE:        false,
 		ALG:       v.ALG,
-		Operators: [4]*VM5FMOperator{},
+		Operators: [4]*VM35FMOperator{},
 	}
 	fb := v.FB
 	for op := 0; op < 4; op++ {
-		result.Operators[op] = v.Operators[op].ToVM5(fb)
+		result.Operators[op] = v.Operators[op].ToVM35(fb)
 		fb = 0
 	}
 	return result

@@ -59,8 +59,8 @@ func (p *VMAVoicePC) String() string {
 	return s + util.Indent(p.Voice.String(), "\t")
 }
 
-func (p *VMAVoicePC) ToVM5() *VM5VoicePC {
-	return &VM5VoicePC{
+func (p *VMAVoicePC) ToVM35() *VM35VoicePC {
+	return &VM35VoicePC{
 		Name:      p.Name,
 		Flag:      0x24,
 		BankMSB:   0,
@@ -69,6 +69,6 @@ func (p *VMAVoicePC) ToVM5() *VM5VoicePC {
 		DrumNote:  0,
 		Enigma1:   0,
 		VoiceType: enums.VoiceType_FM,
-		Voice:     p.Voice.ToVM5(),
+		Voice:     p.Voice.ToVM35(),
 	}
 }

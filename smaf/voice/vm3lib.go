@@ -11,14 +11,14 @@ import (
 	"github.com/pkg/errors"
 )
 
-type VM5VoiceLib struct {
+type VM3VoiceLib struct {
 	Programs []*VM35VoicePC `json:"programs"`
 }
 
-func (lib *VM5VoiceLib) Read(rdr io.Reader, rest *int) error {
+func (lib *VM3VoiceLib) Read(rdr io.Reader, rest *int) error {
 	lib.Programs = []*VM35VoicePC{}
 	for pc := 0; pc < 128 && 0 < *rest; pc++ {
-		voice := &VM35VoicePC{IsVM5: true}
+		voice := &VM35VoicePC{}
 		err := voice.Read(rdr, rest)
 		if err != nil {
 			return errors.WithStack(err)
@@ -28,7 +28,7 @@ func (lib *VM5VoiceLib) Read(rdr io.Reader, rest *int) error {
 	return nil
 }
 
-func (lib *VM5VoiceLib) String() string {
+func (lib *VM3VoiceLib) String() string {
 	s := []string{}
 	for _, v := range lib.Programs {
 		s = append(s, v.String())
@@ -36,7 +36,7 @@ func (lib *VM5VoiceLib) String() string {
 	return strings.Join(s, "\n")
 }
 
-func NewVM5VoiceLib(file string) (*VM5VoiceLib, error) {
+func NewVM3VoiceLib(file string) (*VM3VoiceLib, error) {
 	fh, err := os.Open(file)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -45,13 +45,13 @@ func NewVM5VoiceLib(file string) (*VM5VoiceLib, error) {
 
 	var hdr chunkHeader
 	err = binary.Read(fh, binary.BigEndian, &hdr)
-	if hdr.Signature != 'V'<<24|'O'<<16|'M'<<8|'5' {
-		return nil, errors.Errorf(`Header signature must be "VOM5"`)
+	if hdr.Signature != 'F'<<24|'M'<<16|'M'<<8|'3' {
+		return nil, errors.Errorf(`Header signature must be "FMM3"`)
 	}
 
 	total := int(hdr.Size) + int(unsafe.Sizeof(hdr))
 	rest := int(hdr.Size)
-	lib := &VM5VoiceLib{}
+	lib := &VM3VoiceLib{}
 	err = lib.Read(fh, &rest)
 	if err != nil {
 		return nil, errors.Wrapf(err, "at 0x%X bytes", total-rest)

@@ -10,7 +10,7 @@ type ExclusiveType int
 const (
 	ExclusiveType_Unknown ExclusiveType = iota
 	ExclusiveType_VMAVoice
-	ExclusiveType_VM5Voice
+	ExclusiveType_VM35Voice
 )
 
 func (t ExclusiveType) String() string {
@@ -18,8 +18,8 @@ func (t ExclusiveType) String() string {
 	switch t {
 	case ExclusiveType_VMAVoice:
 		s = "VMAVoice"
-	case ExclusiveType_VM5Voice:
-		s = "VM5Voice"
+	case ExclusiveType_VM35Voice:
+		s = "VM3/VM5Voice"
 	}
 	return fmt.Sprintf("%s(0x%02X)", s, int(t))
 }

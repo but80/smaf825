@@ -30,11 +30,11 @@ import (
 // +17 |               ?               |
 // +18 |               ?               |
 
-type VM5PCMVoice struct {
+type VM35PCMVoice struct {
 	RawData [19]byte `json:"raw_data"`
 }
 
-func (v *VM5PCMVoice) Read(rdr io.Reader, rest *int) error {
+func (v *VM35PCMVoice) Read(rdr io.Reader, rest *int) error {
 	err := binary.Read(rdr, binary.BigEndian, &v.RawData)
 	if err != nil {
 		return errors.WithStack(err)
@@ -43,10 +43,10 @@ func (v *VM5PCMVoice) Read(rdr io.Reader, rest *int) error {
 	return nil
 }
 
-func (v *VM5PCMVoice) ReadUnusedRest(rdr io.Reader, rest *int) error {
+func (v *VM35PCMVoice) ReadUnusedRest(rdr io.Reader, rest *int) error {
 	return nil
 }
 
-func (v *VM5PCMVoice) String() string {
+func (v *VM35PCMVoice) String() string {
 	return util.Hex(v.RawData[:])
 }

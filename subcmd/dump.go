@@ -15,7 +15,7 @@ import (
 var Dump = cli.Command{
 	Name:      "dump",
 	Aliases:   []string{"d"},
-	Usage:     "Dumps SMAF format files (.mmf|.spf|.vma|.vm5)",
+	Usage:     "Dumps SMAF format files (.mmf|.spf|.vma|.vm3|.vm5)",
 	ArgsUsage: "<filename>",
 	Flags: []cli.Flag{
 		cli.BoolFlag{
@@ -41,6 +41,8 @@ var Dump = cli.Command{
 			data, err = chunk.NewFileChunk(file)
 		case ".vma":
 			data, err = voice.NewVMAVoiceLib(file)
+		case ".vm3":
+			data, err = voice.NewVM3VoiceLib(file)
 		case ".vm5":
 			data, err = voice.NewVM5VoiceLib(file)
 		default:

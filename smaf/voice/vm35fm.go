@@ -14,7 +14,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-type VM5FMOperator struct {
+type VM35FMOperator struct {
 	Num   int              `json:"-"`     // Operator number
 	MULTI enums.Multiplier `json:"multi"` // Multiplier
 	DT    int              `json:"dt"`    // Detune
@@ -36,7 +36,7 @@ type VM5FMOperator struct {
 	EVB   bool             `json:"evb"`   // Enable Vibrato
 }
 
-func (op *VM5FMOperator) Read(rdr io.Reader, rest *int) error {
+func (op *VM35FMOperator) Read(rdr io.Reader, rest *int) error {
 	//    | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
 	// +0 |      S R      |XOF| - |SUS|KSR|
 	// +1 |      R R      |      D R      |
@@ -74,7 +74,7 @@ func (op *VM5FMOperator) Read(rdr io.Reader, rest *int) error {
 	return nil
 }
 
-func (op *VM5FMOperator) Bytes(forYMF825 bool) []byte {
+func (op *VM35FMOperator) Bytes(forYMF825 bool) []byte {
 	sus := op.SUS
 	ws := op.WS & 31
 	if forYMF825 {
@@ -94,7 +94,7 @@ func (op *VM5FMOperator) Bytes(forYMF825 bool) []byte {
 	}
 }
 
-func (op *VM5FMOperator) String() string {
+func (op *VM35FMOperator) String() string {
 	t := []string{
 		fmt.Sprintf("ADSR=%d,%d,%d,%d", op.AR, op.DR, op.SR, op.RR),
 		fmt.Sprintf("SL=%d", op.SL),
@@ -122,37 +122,37 @@ func (op *VM5FMOperator) String() string {
 	return fmt.Sprintf("Op #%d: MULTI=%s DT=%d\n", op.Num+1, op.MULTI, op.DT) + util.Indent(s, "\t")
 }
 
-type vm5FMVoiceRawData struct {
+type vm35FMVoiceRawData struct {
 	DrumKey   uint8
 	Enigma    uint8
 	Global    uint16
 	Operators [4][7]uint8
 }
 
-type VM5FMVoice struct {
-	DrumKey   enums.Note        `json:"drum_key"`
-	PANPOT    enums.Panpot      `json:"panpot"` // Panpot (unused in YMF825)
-	BO        enums.BasicOctave `json:"bo"`
-	LFO       int               `json:"lfo"`
-	PE        bool              `json:"pe"` // Panpot Enable (unused in YMF825)
-	ALG       enums.Algorithm   `json:"alg"`
-	Operators [4]*VM5FMOperator `json:"operators"`
+type VM35FMVoice struct {
+	DrumKey   enums.Note         `json:"drum_key"`
+	PANPOT    enums.Panpot       `json:"panpot"` // Panpot (unused in YMF825)
+	BO        enums.BasicOctave  `json:"bo"`
+	LFO       int                `json:"lfo"`
+	PE        bool               `json:"pe"` // Panpot Enable (unused in YMF825)
+	ALG       enums.Algorithm    `json:"alg"`
+	Operators [4]*VM35FMOperator `json:"operators"`
 }
 
-func NewVM5FMVoice(data []byte) (*VM5FMVoice, error) {
-	voice := &VM5FMVoice{}
+func NewVM35FMVoice(data []byte) (*VM35FMVoice, error) {
+	voice := &VM35FMVoice{}
 	rest := len(data)
 	err := voice.Read(bytes.NewReader(data), &rest)
 	if err != nil {
-		return nil, errors.Wrapf(err, "NewVM5FMVoice invalid data: %s", util.Hex(data))
+		return nil, errors.Wrapf(err, "NewVM35FMVoice invalid data: %s", util.Hex(data))
 	}
 	if rest != 0 {
-		return nil, fmt.Errorf("Wrong size of VM5 voice data (want %d, got %d bytes)", len(data)-rest, len(data))
+		return nil, fmt.Errorf("Wrong size of VM3/VM5 voice data (want %d, got %d bytes)", len(data)-rest, len(data))
 	}
 	return voice, nil
 }
 
-func (v *VM5FMVoice) Read(rdr io.Reader, rest *int) error {
+func (v *VM35FMVoice) Read(rdr io.Reader, rest *int) error {
 	//          | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
 	// Global+0 |            DrumKey            |
 	// Global+1 |       PANPOT      | - |  B O  |
@@ -161,7 +161,7 @@ func (v *VM5FMVoice) Read(rdr io.Reader, rest *int) error {
 	var global [3]uint8
 	err := binary.Read(rdr, binary.BigEndian, &global)
 	if err != nil {
-		return errors.Wrapf(err, "VM5FMVoice read failed")
+		return errors.Wrapf(err, "VM35FMVoice read failed")
 	}
 	*rest -= int(unsafe.Sizeof(global))
 	v.DrumKey = enums.Note(global[0])
@@ -170,10 +170,10 @@ func (v *VM5FMVoice) Read(rdr io.Reader, rest *int) error {
 	v.LFO = int(global[2] >> 6 & 3)
 	v.PE = global[2]&0x20 != 0
 	v.ALG = enums.Algorithm(global[2] & 7)
-	v.Operators = [4]*VM5FMOperator{}
+	v.Operators = [4]*VM35FMOperator{}
 	n := v.ALG.OperatorCount()
 	for op := 0; op < 4; op++ {
-		v.Operators[op] = &VM5FMOperator{Num: op}
+		v.Operators[op] = &VM35FMOperator{Num: op}
 	}
 	for op := 0; op < n; op++ {
 		err := v.Operators[op].Read(rdr, rest)
@@ -184,10 +184,10 @@ func (v *VM5FMVoice) Read(rdr io.Reader, rest *int) error {
 	return nil
 }
 
-func (v *VM5FMVoice) ReadUnusedRest(rdr io.Reader, rest *int) error {
+func (v *VM35FMVoice) ReadUnusedRest(rdr io.Reader, rest *int) error {
 	n := v.ALG.OperatorCount()
 	for op := n; op < 4; op++ {
-		v.Operators[op] = &VM5FMOperator{Num: op}
+		v.Operators[op] = &VM35FMOperator{Num: op}
 		err := v.Operators[op].Read(rdr, rest)
 		if err != nil {
 			return errors.WithStack(err)
@@ -196,7 +196,7 @@ func (v *VM5FMVoice) ReadUnusedRest(rdr io.Reader, rest *int) error {
 	return nil
 }
 
-func (v *VM5FMVoice) Bytes(staticLen bool, forYMF825 bool) []byte {
+func (v *VM35FMVoice) Bytes(staticLen bool, forYMF825 bool) []byte {
 	pan := v.PANPOT
 	pe := v.PE
 	if forYMF825 {
@@ -217,7 +217,7 @@ func (v *VM5FMVoice) Bytes(staticLen bool, forYMF825 bool) []byte {
 	return b
 }
 
-func (v *VM5FMVoice) String() string {
+func (v *VM35FMVoice) String() string {
 	s := []string{}
 	//s = append(s, fmt.Sprintf("Flag: 0x%02X", v.Flag))
 	s = append(s, fmt.Sprintf("DrumKey=%s PANPOT=%s LFO=%d PE=%v ALG=%s", v.DrumKey.String(), v.PANPOT, v.LFO, v.PE, v.ALG))

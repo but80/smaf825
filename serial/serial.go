@@ -172,7 +172,7 @@ func (sp *SerialPort) SendSeqVol(v int) {
 	sp.send(9, byte(v<<3))
 }
 
-func (sp *SerialPort) SendTones(data []*voice.VM5FMVoice) {
+func (sp *SerialPort) SendTones(data []*voice.VM35FMVoice) {
 	// Contents Format
 	// The contents format specifies tone parameters and the sequence of data that can be played back with this device consists of melody contents.
 	// The contents are written into the register (I_ADR#7: CONTENTS_DATA_REG) via the CPU interface.

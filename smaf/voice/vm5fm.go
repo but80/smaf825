@@ -147,7 +147,7 @@ func NewVM5FMVoice(data []byte) (*VM5FMVoice, error) {
 		return nil, errors.Wrapf(err, "NewVM5FMVoice invalid data: %s", util.Hex(data))
 	}
 	if rest != 0 {
-		return nil, fmt.Errorf("Wrong size of VM5 voice data")
+		return nil, fmt.Errorf("Wrong size of VM5 voice data (want %d, got %d bytes)", len(data)-rest, len(data))
 	}
 	return voice, nil
 }

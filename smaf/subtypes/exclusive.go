@@ -90,7 +90,11 @@ func (x *Exclusive) Read(rdr io.Reader, rest *int) error {
 					DrumNote: enums.Note(x.Data[8]),
 					Voice:    v,
 				}
+			} else {
+				fmt.Printf("VM5 voice exclusive error: %s: %s\n", err.Error(), util.Hex(x.Data))
 			}
+		} else {
+			fmt.Printf("Unsupported voice type: %s\n", x.VoiceType.String())
 		}
 	} else if 3 <= len(x.Data) && x.Data[0] == 0x43 && x.Data[1] == 0x05 && x.Data[2] == 0x01 {
 		x.Type = enums.ExclusiveType_VM5Voice
@@ -104,6 +108,8 @@ func (x *Exclusive) Read(rdr io.Reader, rest *int) error {
 				DrumNote: 0,
 				Voice:    v,
 			}
+		} else {
+			fmt.Printf("VM5 voice exclusive error: %s: %s\n", err.Error(), util.Hex(x.Data))
 		}
 	} else if 3 <= len(x.Data) && x.Data[0] == 0x43 && x.Data[1] == 0x03 {
 		x.Type = enums.ExclusiveType_VMAVoice
@@ -115,7 +121,11 @@ func (x *Exclusive) Read(rdr io.Reader, rest *int) error {
 				PC:    int(x.Data[4]),
 				Voice: v,
 			}
+		} else {
+			fmt.Printf("VMA voice exclusive error: %s\n", err.Error())
 		}
+	} else {
+		fmt.Printf("Unsupported exclusive type\n")
 	}
 	return nil
 }

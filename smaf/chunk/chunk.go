@@ -39,6 +39,9 @@ type ChunkHeader struct {
 }
 
 func (hdr *ChunkHeader) String() string {
+	if hdr == nil {
+		return "<nil *ChunkHeader>"
+	}
 	s := hdr.Signature
 	ss := fmt.Sprintf("%c%c%c", s>>24, s>>16&255, s>>8&255)
 	switch ss {
@@ -53,7 +56,7 @@ func (hdr *ChunkHeader) String() string {
 func (hdr *ChunkHeader) Read(rdr io.Reader, rest *int) error {
 	err := binary.Read(rdr, binary.BigEndian, hdr)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	*rest -= int(unsafe.Sizeof(hdr)) + int(hdr.Size)
 	return nil

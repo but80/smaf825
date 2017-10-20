@@ -30,7 +30,7 @@ func (c *SeekPhraseInfoChunk) Read(rdr io.Reader) error {
 	c.Stream = make([]uint8, c.ChunkHeader.Size)
 	n, err := rdr.Read(c.Stream)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	if n < len(c.Stream) {
 		return errors.Errorf("Cannot read enough byte length specified in chunk header")

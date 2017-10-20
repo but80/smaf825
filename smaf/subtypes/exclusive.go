@@ -112,6 +112,7 @@ func (x *Exclusive) Read(rdr io.Reader, rest *int) error {
 					Voice:    v,
 				}
 			} else {
+				//return errors.Wrapf(err, "VM3/VM5 voice exclusive error")
 				fmt.Printf("VM3/VM5 voice exclusive error: %s\n", err.Error())
 			}
 		} else {
@@ -147,7 +148,7 @@ func (x *Exclusive) Read(rdr io.Reader, rest *int) error {
 			fmt.Printf("VMA voice exclusive error: %s\n", err.Error())
 		}
 	} else {
-		fmt.Printf("Unsupported exclusive type\n")
+		fmt.Printf("Unsupported exclusive type: %s\n", util.Hex(x.Data))
 	}
 	return nil
 }

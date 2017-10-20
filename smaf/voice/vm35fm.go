@@ -148,10 +148,10 @@ func NewVM35FMVoice(data []byte, version VM35FMVoiceVersion) (*VM35FMVoice, erro
 	rdr := bytes.NewReader(data)
 	err := voice.Read(rdr, &rest)
 	if err != nil {
-		return nil, errors.Wrapf(err, "NewVM35FMVoice invalid data: %s", util.Hex(data))
+		return nil, errors.Wrapf(err, "NewVM35FMVoice invalid data: %s (want %d, got %d bytes)", util.Hex(data), len(data)-rest, len(data))
 	}
 	switch version {
-	case VM35FMVoiceVersion_VM3Lib:
+	case VM35FMVoiceVersion_VM3Lib, VM35FMVoiceVersion_VM3Exclusive:
 		voice.ReadUnusedRest(rdr, &rest)
 	}
 	if rest != 0 {
@@ -161,6 +161,68 @@ func NewVM35FMVoice(data []byte, version VM35FMVoiceVersion) (*VM35FMVoice, erro
 }
 
 func (v *VM35FMVoice) Read(rdr io.Reader, rest *int) error {
+	switch v.Version {
+	case VM35FMVoiceVersion_VM3Exclusive:
+		//    | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
+		// ------------------------------------ Global
+		// +0 |       |PN4|LF1|SR3|RR3|AR3|TL5|  // bit0-3は1つ次のOpに作用
+		// +1 |                               |  // Drumkey?
+		// +2 | - |   PAN0123     |       | ? |
+		// +3 | - |LF0|P E|       |    ALG    |
+		// ------------------------------------ Op0
+		// +4 | - |   SR012   |XOF| - |SUS|KSR|
+		// +5 | - |   RR012   |      D R      |
+		// +6 | - |   AR012   |      S L      |
+		// +7 | - |      TL01234      |  KSL  |
+		// +8 |   -   |ML3|WS4|SR3|RR3|AR3|TL5|  // bit0-3は1つ次のOpに作用
+		// +9 | - |  DAM  |EAM| - |  DVB  |EVB|
+		// +A | - |  MUL012   | - |    DT     |
+		// +B | - |     WS0123    |    FB     |
+		// ------------------------------------ Op1
+		// ...
+		raw := make([]byte, 4+8*4)
+		n, err := rdr.Read(raw)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		*rest -= n
+		raw[2] |= raw[0] << 2 & 0x80
+		raw[3] |= raw[0] << 3 & 0x80
+		for op := 0; op < 4; op++ {
+			raw[4+op*8] |= raw[op*8] << 4 & 0x80
+			raw[5+op*8] |= raw[op*8] << 5 & 0x80
+			raw[6+op*8] |= raw[op*8] << 6 & 0x80
+			raw[7+op*8] |= raw[op*8] << 7 & 0x80
+			raw[10+op*8] |= raw[8+op*8] << 2 & 0x80
+			raw[11+op*8] |= raw[8+op*8] << 3 & 0x80
+		}
+		//    | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
+		// ------------------------------------ Global
+		// +0 |                               |
+		// +1 |                               |  // Drumkey?
+		// +2 |      PANPOT       |       | ? |
+		// +3 |  LFO  |P E|       |    ALG    |
+		// ------------------------------------ Op0
+		// +4 |      S R      |XOF| - |SUS|KSR|
+		// +5 |      R R      |      D R      |
+		// +6 |      A R      |      S L      |
+		// +7 |         T L           |  KSL  |
+		// +8 |                               |
+		// +9 | - |  DAM  |EAM| - |  DVB  |EVB|
+		// +A |      MUL      | - |    DT     |
+		// +B |        W S        |    FB     |
+		// ------------------------------------ Op1
+		// ...
+		fixed := raw[1:4]
+		for op := 0; op < 4; op++ {
+			fixed = append(fixed, raw[4+op*8:8+op*8]...)
+			fixed = append(fixed, raw[9+op*8:12+op*8]...)
+		}
+		rdr = bytes.NewReader(fixed)
+		rest_ := len(fixed)
+		rest = &rest_
+	}
+
 	//          | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
 	// Global+0 |            DrumKey            |
 	// Global+1 |       PANPOT      | - |  B O  |

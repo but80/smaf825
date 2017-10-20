@@ -60,7 +60,10 @@ func (c *ScoreTrackSetupDataChunk) Read(rdr io.Reader) error {
 		switch sig {
 		case 0xF0:
 			ex := subtypes.NewExclusive(false)
-			ex.Read(rdr, &rest)
+			err := ex.Read(rdr, &rest)
+			if err != nil {
+				return errors.WithStack(err)
+			}
 			c.Exclusives = append(c.Exclusives, ex)
 		default:
 			c.UnknownStream = make([]uint8, rest)

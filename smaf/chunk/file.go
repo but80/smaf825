@@ -29,6 +29,9 @@ func (c *FileChunk) Traverse(fn func(Chunk)) {
 }
 
 func (c *FileChunk) String() string {
+	if c == nil {
+		return "<nil *FileChunk>"
+	}
 	result := "MMF File Chunk: " + c.ChunkHeader.String()
 	sub := []string{}
 	for _, chunk := range c.SubChunks {

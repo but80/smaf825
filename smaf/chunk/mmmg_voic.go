@@ -7,6 +7,7 @@ import (
 	"github.com/but80/smaf825/smaf/enums"
 	"github.com/but80/smaf825/smaf/subtypes"
 	"github.com/but80/smaf825/smaf/util"
+	"github.com/pkg/errors"
 )
 
 type MMMGVoiceChunk struct {
@@ -47,11 +48,11 @@ func (c *MMMGVoiceChunk) Read(rdr io.Reader) error {
 		var hdr ChunkHeader
 		err := hdr.Read(rdr, &rest)
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		sub, err := hdr.CreateChunk(rdr, enums.ScoreTrackFormatType_Default)
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		c.SubChunks = append(c.SubChunks, sub)
 	}

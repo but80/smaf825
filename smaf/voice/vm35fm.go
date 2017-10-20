@@ -14,26 +14,35 @@ import (
 	"github.com/pkg/errors"
 )
 
+type VM35FMVoiceVersion int
+
+const (
+	VM35FMVoiceVersion_VM3Lib VM35FMVoiceVersion = iota
+	VM35FMVoiceVersion_VM3Exclusive
+	VM35FMVoiceVersion_VM5
+)
+
 type VM35FMOperator struct {
-	Num   int              `json:"-"`     // Operator number
-	MULTI enums.Multiplier `json:"multi"` // Multiplier
-	DT    int              `json:"dt"`    // Detune
-	AR    int              `json:"ar"`    // Attack Rate
-	DR    int              `json:"dr"`    // Decay Rate
-	SR    int              `json:"sr"`    // Sustain Rate
-	RR    int              `json:"rr"`    // Release Rate
-	SL    int              `json:"sl"`    // Sustain Level
-	TL    int              `json:"tl"`    // Total Level
-	KSL   int              `json:"ksl"`   // Key Scaling Level
-	DAM   int              `json:"dam"`   // Depth of AM
-	DVB   int              `json:"dvb"`   // Depth of Vibrato
-	FB    int              `json:"fb"`    // Feedback
-	WS    int              `json:"ws"`    // Wave Shape
-	XOF   bool             `json:"xof"`   // Ignore KeyOff
-	SUS   bool             `json:"sus"`   // Keep sustain rate after KeyOff (unused in YMF825)
-	KSR   bool             `json:"ksr"`   // Key Scaling Rate
-	EAM   bool             `json:"eam"`   // Enable AM
-	EVB   bool             `json:"evb"`   // Enable Vibrato
+	Num     int                `json:"-"` // Operator number
+	Version VM35FMVoiceVersion `json:"-"`
+	MULTI   enums.Multiplier   `json:"multi"` // Multiplier
+	DT      int                `json:"dt"`    // Detune
+	AR      int                `json:"ar"`    // Attack Rate
+	DR      int                `json:"dr"`    // Decay Rate
+	SR      int                `json:"sr"`    // Sustain Rate
+	RR      int                `json:"rr"`    // Release Rate
+	SL      int                `json:"sl"`    // Sustain Level
+	TL      int                `json:"tl"`    // Total Level
+	KSL     int                `json:"ksl"`   // Key Scaling Level
+	DAM     int                `json:"dam"`   // Depth of AM
+	DVB     int                `json:"dvb"`   // Depth of Vibrato
+	FB      int                `json:"fb"`    // Feedback
+	WS      int                `json:"ws"`    // Wave Shape
+	XOF     bool               `json:"xof"`   // Ignore KeyOff
+	SUS     bool               `json:"sus"`   // Keep sustain rate after KeyOff (unused in YMF825)
+	KSR     bool               `json:"ksr"`   // Key Scaling Rate
+	EAM     bool               `json:"eam"`   // Enable AM
+	EVB     bool               `json:"evb"`   // Enable Vibrato
 }
 
 func (op *VM35FMOperator) Read(rdr io.Reader, rest *int) error {
@@ -122,14 +131,8 @@ func (op *VM35FMOperator) String() string {
 	return fmt.Sprintf("Op #%d: MULTI=%s DT=%d\n", op.Num+1, op.MULTI, op.DT) + util.Indent(s, "\t")
 }
 
-type vm35FMVoiceRawData struct {
-	DrumKey   uint8
-	Enigma    uint8
-	Global    uint16
-	Operators [4][7]uint8
-}
-
 type VM35FMVoice struct {
+	Version   VM35FMVoiceVersion `json:"-"`
 	DrumKey   enums.Note         `json:"drum_key"`
 	PANPOT    enums.Panpot       `json:"panpot"` // Panpot (unused in YMF825)
 	BO        enums.BasicOctave  `json:"bo"`
@@ -139,15 +142,20 @@ type VM35FMVoice struct {
 	Operators [4]*VM35FMOperator `json:"operators"`
 }
 
-func NewVM35FMVoice(data []byte) (*VM35FMVoice, error) {
-	voice := &VM35FMVoice{}
+func NewVM35FMVoice(data []byte, version VM35FMVoiceVersion) (*VM35FMVoice, error) {
+	voice := &VM35FMVoice{Version: version}
 	rest := len(data)
-	err := voice.Read(bytes.NewReader(data), &rest)
+	rdr := bytes.NewReader(data)
+	err := voice.Read(rdr, &rest)
 	if err != nil {
 		return nil, errors.Wrapf(err, "NewVM35FMVoice invalid data: %s", util.Hex(data))
 	}
+	switch version {
+	case VM35FMVoiceVersion_VM3Lib:
+		voice.ReadUnusedRest(rdr, &rest)
+	}
 	if rest != 0 {
-		return nil, fmt.Errorf("Wrong size of VM3/VM5 voice data (want %d, got %d bytes)", len(data)-rest, len(data))
+		return nil, fmt.Errorf("Wrong size of VM3/VM5 voice data (want %d, got %d bytes): %s", len(data)-rest, len(data), util.Hex(data))
 	}
 	return voice, nil
 }
@@ -173,7 +181,7 @@ func (v *VM35FMVoice) Read(rdr io.Reader, rest *int) error {
 	v.Operators = [4]*VM35FMOperator{}
 	n := v.ALG.OperatorCount()
 	for op := 0; op < 4; op++ {
-		v.Operators[op] = &VM35FMOperator{Num: op}
+		v.Operators[op] = &VM35FMOperator{Version: v.Version, Num: op}
 	}
 	for op := 0; op < n; op++ {
 		err := v.Operators[op].Read(rdr, rest)

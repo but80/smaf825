@@ -49,7 +49,12 @@ var Dump = cli.Command{
 			return cli.NewExitError(fmt.Errorf("Unknown file extension"), 1)
 		}
 		if err != nil {
-			return cli.NewExitError(err, 1)
+			switch data.(type) {
+			case nil:
+				return cli.NewExitError(err, 1)
+			default:
+				fmt.Println(err.Error())
+			}
 		}
 		if ctx.Bool("json") {
 			j, err := json.MarshalIndent(data, "", "  ")

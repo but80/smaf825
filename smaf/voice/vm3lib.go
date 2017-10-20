@@ -18,7 +18,7 @@ type VM3VoiceLib struct {
 func (lib *VM3VoiceLib) Read(rdr io.Reader, rest *int) error {
 	lib.Programs = []*VM35VoicePC{}
 	for pc := 0; pc < 128 && 0 < *rest; pc++ {
-		voice := &VM35VoicePC{}
+		voice := &VM35VoicePC{Version: VM35FMVoiceVersion_VM3Lib}
 		err := voice.Read(rdr, rest)
 		if err != nil {
 			return errors.WithStack(err)
@@ -54,7 +54,7 @@ func NewVM3VoiceLib(file string) (*VM3VoiceLib, error) {
 	lib := &VM3VoiceLib{}
 	err = lib.Read(fh, &rest)
 	if err != nil {
-		return nil, errors.Wrapf(err, "at 0x%X bytes", total-rest)
+		return lib, errors.Wrapf(err, "at 0x%X bytes", total-rest)
 	}
 
 	return lib, nil

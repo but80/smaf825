@@ -18,7 +18,7 @@ type VM5VoiceLib struct {
 func (lib *VM5VoiceLib) Read(rdr io.Reader, rest *int) error {
 	lib.Programs = []*VM35VoicePC{}
 	for pc := 0; pc < 128 && 0 < *rest; pc++ {
-		voice := &VM35VoicePC{IsVM5: true}
+		voice := &VM35VoicePC{Version: VM35FMVoiceVersion_VM5}
 		err := voice.Read(rdr, rest)
 		if err != nil {
 			return errors.WithStack(err)

@@ -18,16 +18,16 @@ type VM35Voice interface {
 }
 
 type VM35VoicePC struct {
-	IsVM5     bool            `json:"is_vm5"`
-	Name      string          `json:"name"`
-	Flag      int             `json:"-"` // = 0x24
-	BankMSB   int             `json:"bank_msb"`
-	BankLSB   int             `json:"bank_lsb"`
-	PC        int             `json:"pc"`
-	DrumNote  enums.Note      `json:"drum_note"`
-	Enigma1   int             `json:"-"`
-	VoiceType enums.VoiceType `json:"voice_type"`
-	Voice     VM35Voice       `json:"voice"`
+	Version   VM35FMVoiceVersion `json:"is_vm5"`
+	Name      string             `json:"name"`
+	Flag      int                `json:"-"` // = 0x24
+	BankMSB   int                `json:"bank_msb"`
+	BankLSB   int                `json:"bank_lsb"`
+	PC        int                `json:"pc"`
+	DrumNote  enums.Note         `json:"drum_note"`
+	Enigma1   int                `json:"-"`
+	VoiceType enums.VoiceType    `json:"voice_type"`
+	Voice     VM35Voice          `json:"voice"`
 }
 
 type vm3VoicePCHeaderRawData struct {
@@ -53,7 +53,8 @@ type vm5VoicePCHeaderRawData struct {
 }
 
 func (p *VM35VoicePC) Read(rdr io.Reader, rest *int) error {
-	if p.IsVM5 {
+	switch p.Version {
+	case VM35FMVoiceVersion_VM5:
 		var data vm5VoicePCHeaderRawData
 		err := binary.Read(rdr, binary.BigEndian, &data)
 		if err != nil {
@@ -68,7 +69,7 @@ func (p *VM35VoicePC) Read(rdr io.Reader, rest *int) error {
 		p.DrumNote = enums.Note(data.DrumNote)
 		p.Enigma1 = int(data.Enigma1)
 		p.VoiceType = enums.VoiceType(data.VoiceType)
-	} else {
+	case VM35FMVoiceVersion_VM3Lib:
 		var data vm3VoicePCHeaderRawData
 		err := binary.Read(rdr, binary.BigEndian, &data)
 		if err != nil {
@@ -94,7 +95,7 @@ func (p *VM35VoicePC) Read(rdr io.Reader, rest *int) error {
 		p.Voice.Read(rdr, rest)
 	//case enums.VoiceType_AL:
 	default:
-		return fmt.Errorf("contains unsupported type of voice")
+		return fmt.Errorf("contains unsupported type of voice: %s", p.VoiceType.String())
 	}
 	return nil
 }

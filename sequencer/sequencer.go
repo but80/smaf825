@@ -13,6 +13,7 @@ import (
 	"github.com/but80/smaf825/smaf/chunk"
 	"github.com/but80/smaf825/smaf/enums"
 	"github.com/but80/smaf825/smaf/event"
+	"github.com/but80/smaf825/smaf/log"
 	"github.com/but80/smaf825/smaf/util"
 	"github.com/but80/smaf825/smaf/voice"
 	"github.com/pkg/errors"
@@ -89,7 +90,9 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, loop, volume, gain, seqvol int) e
 		}
 	}
 	if 0 < len(contentsInfo) {
-		fmt.Printf("\n=============== playing %s\n\n", strings.Join(contentsInfo, " - "))
+		log.Infof("")
+		log.Infof("=============== playing %s", strings.Join(contentsInfo, " - "))
+		log.Infof("")
 	}
 	//
 	channelsToSplit := []enums.Channel{}
@@ -103,7 +106,7 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, loop, volume, gain, seqvol int) e
 	}
 	sequence.AggregateUsage(channelsToSplit)
 	//
-	//fmt.Println("collecting voices")
+	log.Debugf("collecting voices")
 	for _, x := range setup.GetExclusives() {
 		switch x.Type {
 		case enums.ExclusiveType_VM35Voice:
@@ -129,7 +132,7 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, loop, volume, gain, seqvol int) e
 	q.port.SendAnalogGain(gain)
 	q.port.SendSeqVol(seqvol)
 	//
-	fmt.Println("sending voices")
+	log.Debugf("sending voices")
 	q.port.SendAllOff() // トーン設定時は発音をすべて停止
 	q.port.SendTones(State.ToneData())
 	//
@@ -143,9 +146,9 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, loop, volume, gain, seqvol int) e
 		durationTickCycle = score.DurationTimeBase / timeBase
 		gateTickCycle = score.GateTimeBase / timeBase
 	}
-	fmt.Printf("common time base = %d msec\n", timeBase)
-	fmt.Printf("durationTickCycle = %d\n", durationTickCycle)
-	fmt.Printf("gateTickCycle = %d\n", gateTickCycle)
+	log.Debugf("common time base = %d msec", timeBase)
+	log.Debugf("durationTickCycle = %d", durationTickCycle)
+	log.Debugf("gateTickCycle = %d", gateTickCycle)
 	ticker := time.NewTicker(time.Duration(timeBase) * time.Millisecond)
 	end := make(chan bool)
 	stopped := false
@@ -195,7 +198,7 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, loop, volume, gain, seqvol int) e
 							State.Print()
 						}
 						//if 128 <= pair.Duration {
-						//	fmt.Printf("dur %d\n", pair.Duration)
+						//	log.Debugf("dur %d", pair.Duration)
 						//}
 						durationRest = pair.Duration * durationTickCycle
 						pendingEvent = pair.Event
@@ -260,7 +263,7 @@ func (q *Sequencer) processEvent(sequence *chunk.ScoreTrackSequenceDataChunk, ga
 		if 0 <= toneID {
 			cs.ToneID = toneID
 		} else {
-			fmt.Printf("Undefined or unsupported PC %d-%d-@%d\n", cs.BankMSB, cs.BankLSB, cs.PC)
+			log.Warnf("Undefined or unsupported PC %d-%d-@%d", cs.BankMSB, cs.BankLSB, cs.PC)
 		}
 
 	case *event.OctaveShiftEvent:
@@ -271,7 +274,6 @@ func (q *Sequencer) processEvent(sequence *chunk.ScoreTrackSequenceDataChunk, ga
 
 	case *event.NopEvent:
 		// nop
-		//fmt.Println("nop")
 	default:
 	}
 }

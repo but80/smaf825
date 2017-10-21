@@ -146,9 +146,11 @@ func NewVMAFMVoice(data []byte) (*VMAFMVoice, error) {
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	err = voice.ReadUnusedRest(rdr, &rest)
-	if err != nil {
-		return nil, errors.WithStack(err)
+	if 0 < rest {
+		err = voice.ReadUnusedRest(rdr, &rest)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
 	}
 	if rest != 0 {
 		return nil, fmt.Errorf("Wrong size of VMA voice data (want %d, got %d)", len(data)+rest, len(data))

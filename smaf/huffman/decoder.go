@@ -9,6 +9,7 @@ import (
 	"encoding/binary"
 
 	"github.com/pkg/errors"
+	//"github.com/but80/smaf825/smaf/log"
 )
 
 const (
@@ -23,7 +24,7 @@ type HuffmanDecoder struct {
 
 func (d *HuffmanDecoder) readtree() (int, error) {
 	bit, err := d.reader.ReadBit()
-	//fmt.Printf("%v\n", bit)
+	//log.Debugf("%v", bit)
 	if err != nil {
 		return -1, errors.WithStack(err)
 	}
@@ -58,9 +59,9 @@ func (d *HuffmanDecoder) Read(p []byte) (int, error) {
 		return 0, errors.WithStack(err)
 	}
 	size := len(p)
-	//fmt.Printf("left: %v\n", d.left)
-	//fmt.Printf("right: %v\n", d.right)
-	//fmt.Printf("size: %d\n", size)
+	//log.Debugf("left: %v", d.left)
+	//log.Debugf("right: %v", d.right)
+	//log.Debugf("size: %d", size)
 	for k := 0; k < size; k++ {
 		j := root
 		for n <= j {
@@ -112,7 +113,7 @@ func (r *HuffmanReader) cache() error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	//fmt.Printf("%s\n", util.Hex(r.buf))
+	//log.Debugf("%s", util.Hex(r.buf))
 	return nil
 }
 

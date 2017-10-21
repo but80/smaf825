@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/but80/smaf825/smaf/enums"
+	"github.com/but80/smaf825/smaf/log"
 	"github.com/but80/smaf825/smaf/util"
 	"github.com/but80/smaf825/smaf/voice"
 	"github.com/pkg/errors"
@@ -92,10 +93,10 @@ func (x *Exclusive) Read(rdr io.Reader, rest *int) error {
 					Voice:    v,
 				}
 			} else {
-				fmt.Printf("VM3/VM5 voice exclusive error: %s\n", err.Error())
+				log.Warnf("VM3/VM5 voice exclusive error: %s", err.Error())
 			}
 		} else {
-			fmt.Printf("Unsupported voice type: %s\n", x.VoiceType.String())
+			log.Warnf("Unsupported voice type: %s", x.VoiceType.String())
 		}
 	} else if 10 <= len(x.Data) && x.Data[0] == 0x43 && x.Data[1] == 0x79 && x.Data[2] == 0x06 && x.Data[3] == 0x7F && x.Data[4] == 0x01 {
 		x.Type = enums.ExclusiveType_VM35Voice
@@ -112,11 +113,10 @@ func (x *Exclusive) Read(rdr io.Reader, rest *int) error {
 					Voice:    v,
 				}
 			} else {
-				//return errors.Wrapf(err, "VM3/VM5 voice exclusive error")
-				fmt.Printf("VM3/VM5 voice exclusive error: %s\n", err.Error())
+				log.Warnf("VM3/VM5 voice exclusive error: %s", err.Error())
 			}
 		} else {
-			fmt.Printf("Unsupported voice type: %s\n", x.VoiceType.String())
+			log.Warnf("Unsupported voice type: %s", x.VoiceType.String())
 		}
 	} else if 3 <= len(x.Data) && x.Data[0] == 0x43 && x.Data[1] == 0x05 && x.Data[2] == 0x01 {
 		x.Type = enums.ExclusiveType_VM35Voice
@@ -132,9 +132,9 @@ func (x *Exclusive) Read(rdr io.Reader, rest *int) error {
 				Voice:    v,
 			}
 		} else {
-			fmt.Printf("VM3/VM5 voice exclusive error: %s\n", err.Error())
+			log.Warnf("VM3/VM5 voice exclusive error: %s", err.Error())
 		}
-	} else if 3 <= len(x.Data) && x.Data[0] == 0x43 && x.Data[1] == 0x03 {
+	} else if 6 <= len(x.Data) && x.Data[0] == 0x43 && x.Data[1] == 0x03 {
 		x.Type = enums.ExclusiveType_VMAVoice
 		x.VoiceType = enums.VoiceType_FM
 		v, err := voice.NewVMAFMVoice(x.Data[5:])
@@ -145,10 +145,10 @@ func (x *Exclusive) Read(rdr io.Reader, rest *int) error {
 				Voice: v,
 			}
 		} else {
-			fmt.Printf("VMA voice exclusive error: %s\n", err.Error())
+			log.Warnf("VMA voice exclusive error: %s: %s", err.Error(), util.Hex(x.Data))
 		}
 	} else {
-		fmt.Printf("Unsupported exclusive type: %s\n", util.Hex(x.Data))
+		log.Warnf("Unsupported exclusive type: %s", util.Hex(x.Data))
 	}
 	return nil
 }

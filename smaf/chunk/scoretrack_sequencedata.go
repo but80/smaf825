@@ -10,6 +10,7 @@ import (
 	"github.com/but80/smaf825/smaf/enums"
 	"github.com/but80/smaf825/smaf/event"
 	"github.com/but80/smaf825/smaf/huffman"
+	"github.com/but80/smaf825/smaf/log"
 	"github.com/but80/smaf825/smaf/util"
 	"github.com/pkg/errors"
 )
@@ -159,7 +160,7 @@ func (c *ScoreTrackSequenceDataChunk) AggregateUsage(channelsToSplit []enums.Cha
 				continue
 			}
 			if len(unusedChannels) == 0 {
-				fmt.Printf("Too many drum notes (%d in Ch.%d). %s is ignored\n", len(usedNotes[ch]), ch, note)
+				log.Warnf("Too many drum notes (%d in Ch.%d). %s is ignored", len(usedNotes[ch]), ch, note)
 				c.NoteToChannel[ch][note] = -1
 				c.IgnoredPC[pc[ch]|uint32(note)] = true
 			} else {
@@ -170,10 +171,6 @@ func (c *ScoreTrackSequenceDataChunk) AggregateUsage(channelsToSplit []enums.Cha
 			}
 		}
 	}
-	//fmt.Printf("%+v\n", c.IgnoredPC)
-	//fmt.Printf("%+v\n", c.IsChannelUsed)
-	//fmt.Printf("%+v\n", c.NoteToChannel)
-	//fmt.Printf("%+v\n", c.ChannelToChannels)
 }
 
 func (c *ScoreTrackSequenceDataChunk) IsIgnoredPC(bankMSB, bankLSB, PC int, drumNote enums.Note) bool {

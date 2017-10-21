@@ -8,7 +8,10 @@ import (
 
 	"encoding/json"
 
+	"strings"
+
 	"github.com/but80/smaf825/smaf/enums"
+	"github.com/but80/smaf825/smaf/log"
 	"github.com/but80/smaf825/smaf/subtypes"
 	"github.com/pkg/errors"
 )
@@ -66,14 +69,9 @@ var depth int
 
 func (hdr *ChunkHeader) CreateChunk(rdr io.Reader, formatType enums.ScoreTrackFormatType) (Chunk, error) {
 	var chunk Chunk
-	if false {
-		for i := 0; i < depth; i++ {
-			fmt.Print("  ")
-		}
-		fmt.Printf("Creating chunk %s\n", hdr.Signature.String())
-		depth++
-		defer func() { depth-- }()
-	}
+	log.Debugf("%sCreating chunk %s", strings.Repeat("  ", depth), hdr.Signature.String())
+	depth++
+	defer func() { depth-- }()
 	switch hdr.Signature {
 	case 'C'<<24 | 'N'<<16 | 'T'<<8 | 'I': // CNTI
 		chunk = &ContentsInfoChunk{ChunkHeader: hdr}

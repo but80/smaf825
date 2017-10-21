@@ -7,6 +7,7 @@ import (
 
 	"github.com/ahmetalpbalkan/go-cursor"
 	"github.com/but80/smaf825/smaf/enums"
+	"github.com/but80/smaf825/smaf/log"
 	"github.com/but80/smaf825/smaf/voice"
 )
 
@@ -125,7 +126,7 @@ func (ss *SequencerState) ToneData() []*voice.VM35FMVoice {
 		tones = append(tones, t.Voice.(*voice.VM35FMVoice))
 	}
 	if 16 < len(tones) {
-		fmt.Printf("Too many tones (%d)\n", len(tones))
+		log.Warnf("Too many tones (got %d tones, want <=16)", len(tones))
 		tones = tones[:16]
 	}
 	return tones

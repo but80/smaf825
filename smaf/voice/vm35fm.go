@@ -10,6 +10,7 @@ import (
 	"bytes"
 
 	"github.com/but80/smaf825/smaf/enums"
+	"github.com/but80/smaf825/smaf/log"
 	"github.com/but80/smaf825/smaf/util"
 	"github.com/pkg/errors"
 )
@@ -89,7 +90,7 @@ func (op *VM35FMOperator) Bytes(forYMF825 bool) []byte {
 	if forYMF825 {
 		sus = false
 		if ws < 0 || ws == 15 || ws == 23 || 31 <= ws {
-			fmt.Printf("Invalid wave shape %d\n", ws)
+			log.Warnf("Invalid wave shape %d", ws)
 		}
 	}
 	return []byte{

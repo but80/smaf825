@@ -5,6 +5,7 @@ import (
 
 	"github.com/but80/smaf825/sequencer"
 	"github.com/but80/smaf825/smaf/chunk"
+	"github.com/but80/smaf825/smaf/log"
 	"github.com/urfave/cli"
 )
 
@@ -38,6 +39,14 @@ var Play = cli.Command{
 			Usage: `Loop count (0: infinite)`,
 			Value: 1,
 		},
+		cli.BoolFlag{
+			Name:  "debug, d",
+			Usage: `Show debug messages`,
+		},
+		cli.BoolFlag{
+			Name:  "quiet, q",
+			Usage: `Suppress information messages`,
+		},
 	},
 	Action: func(ctx *cli.Context) error {
 		if ctx.NArg() < 2 || ctx.Int("loop") < 0 ||
@@ -47,12 +56,16 @@ var Play = cli.Command{
 			cli.ShowCommandHelp(ctx, "play")
 			os.Exit(1)
 		}
+		if ctx.Bool("debug") {
+			log.Level = log.LogLevel_Debug
+		} else if ctx.Bool("quiet") {
+			log.Level = log.LogLevel_Warn
+		}
 		args := ctx.Args()
 		mmf, err := chunk.NewFileChunk(args[1])
 		if err != nil {
 			return cli.NewExitError(err, 1)
 		}
-		//fmt.Println(mmf.String())
 		q := sequencer.Sequencer{
 			DeviceName: args[0],
 			ShowState:  ctx.Bool("state"),

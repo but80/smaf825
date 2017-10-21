@@ -4,10 +4,10 @@ import (
 	"math"
 
 	"bufio"
-	"fmt"
 	"io"
 
 	"github.com/but80/smaf825/smaf/enums"
+	"github.com/but80/smaf825/smaf/log"
 	"github.com/but80/smaf825/smaf/voice"
 	"github.com/jacobsa/go-serial/serial"
 	"github.com/pkg/errors"
@@ -26,7 +26,7 @@ type SerialPort struct {
 }
 
 func NewSerialPort(deviceName string) (*SerialPort, error) {
-	fmt.Println("opening serial port")
+	log.Infof("opening serial port")
 	sp := &SerialPort{
 		deviceName: deviceName,
 		selectedCh: -1,
@@ -58,13 +58,13 @@ func NewSerialPort(deviceName string) (*SerialPort, error) {
 					continue
 				}
 				if err != nil {
-					fmt.Println("ERR: " + err.Error())
+					log.Warnf("ERR: " + err.Error())
 				}
 				s := string(line)
 				if s == "" {
 					continue
 				}
-				fmt.Println("IN: " + s)
+				log.Debugf("IN: " + s)
 				if s == "ready" {
 					wait <- true
 				}
@@ -78,9 +78,9 @@ func NewSerialPort(deviceName string) (*SerialPort, error) {
 func (sp *SerialPort) Close() {
 	sp.closed = true
 	if sp.ser != nil {
-		fmt.Println("closing serial port")
+		log.Infof("closing serial port")
 		sp.ser.Close()
-		fmt.Println("done")
+		log.Infof("done")
 	}
 	sp.ser = nil
 }
@@ -100,11 +100,6 @@ func (sp *SerialPort) sendData(addr uint8, data []byte) {
 	} else {
 		hdr = []byte{addr | 0x80, byte(n >> 8 & 255), byte(n & 255)}
 	}
-	//fmt.Printf("      W%d", addr)
-	//for _, d := range data {
-	//	fmt.Printf(",%d", d)
-	//}
-	//fmt.Println()
 	_, err := sp.ser.Write(append(hdr, data...))
 	if err != nil {
 		panic(errors.WithStack(err))

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/but80/smaf825/smaf/chunk"
+	"github.com/but80/smaf825/smaf/log"
 	"github.com/but80/smaf825/smaf/voice"
 	"github.com/urfave/cli"
 )
@@ -53,7 +54,7 @@ var Dump = cli.Command{
 			case nil:
 				return cli.NewExitError(err, 1)
 			default:
-				fmt.Println(err.Error())
+				log.Warnf(err.Error())
 			}
 		}
 		if ctx.Bool("json") {

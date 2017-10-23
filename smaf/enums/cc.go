@@ -7,10 +7,13 @@ type CC int
 const (
 	CC_BankSelectMSB = 0
 	CC_Modulation    = 1
+	CC_DataEntry     = 6
 	CC_MainVolume    = 7
 	CC_Panpot        = 10
 	CC_Expression    = 11
 	CC_BankSelectLSB = 32
+	CC_RPNLSB        = 100
+	CC_RPNMSB        = 101
 	CC_MonoOn        = 126
 )
 
@@ -21,6 +24,8 @@ func (cc CC) String() string {
 		s = "BankSelectMSB"
 	case CC_Modulation:
 		s = "Modulation"
+	case CC_DataEntry:
+		s = "DataEntry"
 	case CC_MainVolume:
 		s = "MainVolume"
 	case CC_Panpot:
@@ -29,6 +34,10 @@ func (cc CC) String() string {
 		s = "Expression"
 	case CC_BankSelectLSB:
 		s = "BankSelectLSB"
+	case CC_RPNLSB:
+		s = "RPNLSB"
+	case CC_RPNMSB:
+		s = "RPNMSB"
 	case CC_MonoOn:
 		s = "MonoOn"
 	}

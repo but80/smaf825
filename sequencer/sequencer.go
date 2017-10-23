@@ -231,7 +231,7 @@ func (q *Sequencer) processEvent(sequence *chunk.ScoreTrackSequenceDataChunk, ga
 		cs.Velocity = evt.Velocity
 		cs.NoteOn(evt.Note, evt.GateTime*gateTickCycle) // @todo Add "+1" for tie/slur only
 		vol := float64(cs.Velocity) / 127.0 * float64(cs.Expression) / 127.0
-		delta := float64(cs.PitchBend) / 4096.0 // @todo consider bend range
+		delta := float64(cs.PitchBend) * float64(cs.PitchBendRange) / 8192.0
 		note := evt.Note
 		toneID := cs.ToneID
 		// @todo Fix note and select tone ID for tracks with KeyControlStatus_Off
@@ -303,6 +303,20 @@ func (q *Sequencer) sendCC(sequence *chunk.ScoreTrackSequenceDataChunk, evt *eve
 		cs.BankLSB = evt.Value
 	case enums.CC_MonoOn:
 		cs.Mono = true
+	case enums.CC_RPNLSB:
+		cs.RPNLSB = evt.Value
+	case enums.CC_RPNMSB:
+		cs.RPNMSB = evt.Value
+	case enums.CC_DataEntry:
+		switch cs.RPNMSB {
+		case 0:
+			switch cs.RPNLSB {
+			case 0: // Pitch bend sensitivity
+				cs.PitchBendRange = evt.Value
+			case 1: // Master fine tuning
+			case 2: // Master coarse tuning
+			}
+		}
 	}
 }
 

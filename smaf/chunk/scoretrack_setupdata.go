@@ -7,6 +7,7 @@ import (
 	"encoding/binary"
 	"fmt"
 
+	"github.com/but80/smaf825/smaf/log"
 	"github.com/but80/smaf825/smaf/subtypes"
 	"github.com/but80/smaf825/smaf/util"
 	"github.com/pkg/errors"
@@ -44,10 +45,12 @@ func (c *ScoreTrackSetupDataChunk) Read(rdr io.Reader) error {
 		var sig uint8
 		err := binary.Read(rdr, binary.BigEndian, &sig)
 		if err != nil {
+			log.Debugf("Read failed")
 			return errors.WithStack(err)
 		}
 		rest--
 		if sig == 0xff {
+			log.Debugf("Read 0xff")
 			err = binary.Read(rdr, binary.BigEndian, &sig)
 			if err != nil {
 				return errors.WithStack(err)
@@ -55,17 +58,22 @@ func (c *ScoreTrackSetupDataChunk) Read(rdr io.Reader) error {
 			rest--
 		}
 		if rest == 0 {
+			log.Debugf("Unexpected EOF")
 			break
 		}
 		switch sig {
 		case 0xF0:
+			log.Debugf("Creating Exclusive")
 			ex := subtypes.NewExclusive(false)
+			log.Enter()
 			err := ex.Read(rdr, &rest)
+			log.Leave()
 			if err != nil {
 				return errors.WithStack(err)
 			}
 			c.Exclusives = append(c.Exclusives, ex)
 		default:
+			log.Debugf("Creating UnknownStream")
 			c.UnknownStream = make([]uint8, rest)
 			n, err := rdr.Read(c.UnknownStream)
 			if err != nil {

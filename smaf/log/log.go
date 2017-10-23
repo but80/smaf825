@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"strings"
+
 	"github.com/fatih/color"
 )
 
@@ -33,8 +35,18 @@ func Infof(f string, args ...interface{}) {
 	}
 }
 
+var indent = 0
+
 func Debugf(f string, args ...interface{}) {
 	if LogLevel_Debug <= Level {
-		cyan.Fprintf(os.Stderr, "[DEBUG] "+f+"\n", args...)
+		cyan.Fprintf(os.Stderr, "[DEBUG] "+strings.Repeat("  ", indent)+f+"\n", args...)
 	}
+}
+
+func Enter() {
+	indent++
+}
+
+func Leave() {
+	indent--
 }

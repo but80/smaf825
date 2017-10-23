@@ -21,12 +21,15 @@ type ChannelState struct {
 	PC               int
 	ToneID           int
 	PitchBend        int
+	PitchBendRange   int
 	Modulation       int
 	Volume           int
 	Panpot           int
 	Expression       int
 	OctaveShift      int
 	Mono             bool
+	RPNMSB           int
+	RPNLSB           int
 }
 
 func (cs *ChannelState) Tick() []enums.Note {
@@ -183,11 +186,12 @@ func init() {
 	State.Tones = []*voice.VM35VoicePC{}
 	for i := 0; i < 16; i++ {
 		State.Channels[i] = &ChannelState{
-			GateTimeRest: map[enums.Note]int{},
-			ToneID:       0,
-			Panpot:       64,
-			Volume:       100,
-			Expression:   100,
+			GateTimeRest:   map[enums.Note]int{},
+			ToneID:         0,
+			Panpot:         64,
+			Volume:         100,
+			Expression:     100,
+			PitchBendRange: 2,
 		}
 	}
 }

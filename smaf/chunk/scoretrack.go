@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"github.com/but80/smaf825/smaf/enums"
+	"github.com/but80/smaf825/smaf/log"
 	"github.com/but80/smaf825/smaf/subtypes"
 	"github.com/but80/smaf825/smaf/util"
 	"github.com/pkg/errors"
@@ -95,6 +96,7 @@ func (c *ScoreTrackChunk) Read(rdr io.Reader) error {
 	c.DurationTimeBase = timeBase(rawHeader.TimebaseD)
 	c.GateTimeBase = timeBase(rawHeader.TimebaseG)
 
+	log.Debugf("FormatType %s", c.FormatType.String())
 	if !c.FormatType.IsSupported() {
 		return fmt.Errorf("Unsupported FormatType %d", int(c.FormatType))
 	}

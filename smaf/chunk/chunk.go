@@ -8,8 +8,6 @@ import (
 
 	"encoding/json"
 
-	"strings"
-
 	"github.com/but80/smaf825/smaf/enums"
 	"github.com/but80/smaf825/smaf/log"
 	"github.com/but80/smaf825/smaf/subtypes"
@@ -65,51 +63,60 @@ func (hdr *ChunkHeader) Read(rdr io.Reader, rest *int) error {
 	return nil
 }
 
-var depth int
-
 func (hdr *ChunkHeader) CreateChunk(rdr io.Reader, formatType enums.ScoreTrackFormatType) (Chunk, error) {
 	var chunk Chunk
-	log.Debugf("%sCreating chunk %s", strings.Repeat("  ", depth), hdr.Signature.String())
-	depth++
-	defer func() { depth-- }()
 	switch hdr.Signature {
 	case 'C'<<24 | 'N'<<16 | 'T'<<8 | 'I': // CNTI
+		log.Debugf("Creating ContentsInfoChunk")
 		chunk = &ContentsInfoChunk{ChunkHeader: hdr}
 	case 'O'<<24 | 'P'<<16 | 'D'<<8 | 'A': // OPDA
+		log.Debugf("Creating OptionalDataChunk")
 		chunk = &OptionalDataChunk{ChunkHeader: hdr}
 	case 'M'<<24 | 'M'<<16 | 'M'<<8 | 'G': // MMMG
+		log.Debugf("Creating MMMGChunk")
 		chunk = &MMMGChunk{ChunkHeader: hdr}
 	case 'M'<<24 | 's'<<16 | 'p'<<8 | 'I': // MspI
+		log.Debugf("Creating SeekPhraseInfoChunk")
 		chunk = &SeekPhraseInfoChunk{ChunkHeader: hdr}
 	case 'M'<<24 | 't'<<16 | 's'<<8 | 'u': // Mtsu
+		log.Debugf("Creating ScoreTrackSetupDataChunk")
 		chunk = &ScoreTrackSetupDataChunk{ChunkHeader: hdr}
 	case 'M'<<24 | 't'<<16 | 's'<<8 | 'q': // Mtsq
+		log.Debugf("Creating ScoreTrackSequenceDataChunk")
 		chunk = &ScoreTrackSequenceDataChunk{
 			ChunkHeader: hdr,
 			FormatType:  formatType,
 		}
 	case 'S'<<24 | 'E'<<16 | 'Q'<<8 | 'U': // SEQU
+		log.Debugf("Creating ScoreTrackSequenceDataChunk")
 		chunk = &ScoreTrackSequenceDataChunk{
 			ChunkHeader: hdr,
 			FormatType:  enums.ScoreTrackFormatType_SEQU,
 		}
 	case 'V'<<24 | 'O'<<16 | 'I'<<8 | 'C': // VOIC
+		log.Debugf("Creating MMMGVoiceChunk")
 		chunk = &MMMGVoiceChunk{ChunkHeader: hdr}
 	case 'E'<<24 | 'X'<<16 | 'V'<<8 | 'O': // EXVO
+		log.Debugf("Creating MMMGEXVOChunk")
 		chunk = &MMMGEXVOChunk{ChunkHeader: hdr}
 	default:
 		switch hdr.Signature & 0xFFFFFF00 {
 		case 'M'<<24 | 'T'<<16 | 'R'<<8: // MTR*
+			log.Debugf("Creating ScoreTrackChunk")
 			chunk = &ScoreTrackChunk{ChunkHeader: hdr}
 		case 'D'<<24 | 'c'<<16 | 'h'<<8: // Dch*
+			log.Debugf("Creating DataChunk")
 			chunk = &DataChunk{ChunkHeader: hdr}
 		default: // unknown sub chunk
+			log.Debugf("Creating UnknownChunk")
 			chunk = &UnknownChunk{ChunkHeader: hdr}
 		}
 	}
+	log.Enter()
+	defer log.Leave()
 	err := chunk.Read(rdr)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Creating %T (%s)", chunk, hdr.Signature.String())
+		return nil, errors.Wrapf(err, "Creating chunk %s", hdr.Signature.String())
 	}
 	return chunk, nil
 }

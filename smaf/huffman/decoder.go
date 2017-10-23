@@ -10,6 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 	//"github.com/but80/smaf825/smaf/log"
+	"github.com/but80/smaf825/smaf/log"
 )
 
 const (
@@ -103,6 +104,7 @@ func (r *HuffmanReader) cache() error {
 	if r.buf != nil {
 		return nil
 	}
+	log.Debugf("Decompressing huffman code")
 	var size uint32
 	err := binary.Read(r.reader, binary.BigEndian, &size)
 	if err != nil {
@@ -113,7 +115,6 @@ func (r *HuffmanReader) cache() error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	//log.Debugf("%s", util.Hex(r.buf))
 	return nil
 }
 

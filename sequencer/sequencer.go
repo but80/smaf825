@@ -248,7 +248,7 @@ func (q *Sequencer) processEvent(sequence *chunk.ScoreTrackSequenceDataChunk, ga
 
 	case *event.PitchBendEvent:
 		cs.PitchBend = evt.Value
-		delta := float64(cs.PitchBend) / 4096.0 // @todo consider bend range
+		delta := float64(cs.PitchBend) * float64(cs.PitchBendRange) / 8192.0
 		for note := range cs.GateTimeRest {
 			chTo := sequence.ChannelTo(ch, note)
 			q.port.SendPitch(chTo, note, delta)
@@ -303,20 +303,43 @@ func (q *Sequencer) sendCC(sequence *chunk.ScoreTrackSequenceDataChunk, evt *eve
 		cs.BankLSB = evt.Value
 	case enums.CC_MonoOn:
 		cs.Mono = true
+	case enums.CC_PolyOn:
+		cs.Mono = false
 	case enums.CC_RPNLSB:
 		cs.RPNLSB = evt.Value
 	case enums.CC_RPNMSB:
 		cs.RPNMSB = evt.Value
+	case enums.CC_AllSoundOff:
+		notes := cs.AllOff()
+		for _, note := range notes {
+			chTo := sequence.ChannelTo(enums.Channel(ch), note)
+			toneID := cs.ToneID
+			if cs.KeyControlStatus == enums.KeyControlStatus_Off {
+				toneID = State.GetToneIDByPCAndDrumNote(cs.BankMSB, cs.BankLSB, cs.PC, note)
+			}
+			q.port.SendKeyOff(chTo, toneID)
+		}
 	case enums.CC_DataEntry:
 		switch cs.RPNMSB {
 		case 0:
 			switch cs.RPNLSB {
 			case 0: // Pitch bend sensitivity
 				cs.PitchBendRange = evt.Value
-			case 1: // Master fine tuning
-			case 2: // Master coarse tuning
+				delta := float64(cs.PitchBend) * float64(cs.PitchBendRange) / 8192.0
+				for note := range cs.GateTimeRest {
+					chTo := sequence.ChannelTo(ch, note)
+					q.port.SendPitch(chTo, note, delta)
+				}
+			//case 1: // Master fine tuning
+			//case 2: // Master coarse tuning
+			default:
+				log.Warnf("Unsupported RPN %d-%d = %d", cs.RPNMSB, cs.RPNLSB, evt.Value)
 			}
+		default:
+			log.Warnf("Unsupported RPN %d-%d = %d", cs.RPNMSB, cs.RPNLSB, evt.Value)
 		}
+	default:
+		log.Warnf("Unsupported CC %s = %d", evt.CC.String(), evt.Value)
 	}
 }
 

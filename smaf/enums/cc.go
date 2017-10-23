@@ -14,7 +14,9 @@ const (
 	CC_BankSelectLSB = 32
 	CC_RPNLSB        = 100
 	CC_RPNMSB        = 101
+	CC_AllSoundOff   = 120
 	CC_MonoOn        = 126
+	CC_PolyOn        = 127
 )
 
 func (cc CC) String() string {
@@ -38,8 +40,12 @@ func (cc CC) String() string {
 		s = "RPNLSB"
 	case CC_RPNMSB:
 		s = "RPNMSB"
+	case CC_AllSoundOff:
+		s = "AllSoundOff"
 	case CC_MonoOn:
 		s = "MonoOn"
+	case CC_PolyOn:
+		s = "PolyOn"
 	}
 	return fmt.Sprintf("%s(%d)", s, int(cc))
 }

@@ -49,6 +49,15 @@ func (cs *ChannelState) Tick() []enums.Note {
 	return notes
 }
 
+func (cs *ChannelState) AllOff() []enums.Note {
+	notes := []enums.Note{}
+	for note := range cs.GateTimeRest {
+		notes = append(notes, note)
+	}
+	cs.GateTimeRest = map[enums.Note]int{}
+	return notes
+}
+
 func (cs *ChannelState) HasRest() bool {
 	return 0 < len(cs.GateTimeRest)
 }

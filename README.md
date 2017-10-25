@@ -42,3 +42,4 @@ smaf825 play /dev/tty.usbserial-xxxxxxxx music.mmf
   - MA-2, MA-5 用のツールで作成したMMFの再生を確認しています。MA-3, MA-7 については未確認です。
 - シリアルポート経由でリアルタイムにレジスタへの書き込みを行っています。
   `smaf825` を実行中のマシンで他のプロセスによる負荷がかかっている場合、再生がもたつく場合があります。
+- [ベロシティカーブの違い](https://web.archive.org/web/20050428062745/http://www.senyou.net:80/~nam/smaf/midv2ma3.html)について、未対応です（すみません）

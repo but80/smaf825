@@ -47,7 +47,11 @@ brew install smaf825
 Arduinoを接続しているシリアルポートのデバイス名を指定する必要がありますので、スケッチの転送時に指定したデバイス名をここでも指定してください。
 
 ```bash
+# macOS
 smaf825 play /dev/tty.usbserial-xxxxxxxx music.mmf
+
+# Windows
+smaf825 play comX music.mmf
 ```
 
 ## YMF825用トーンデータの抽出

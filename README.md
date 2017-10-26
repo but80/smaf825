@@ -24,7 +24,7 @@ brew install smaf825
 ### Go 1.8 でのインストール（開発者向け）
 
 1. [Go 1.8 をインストール](https://golang.org/dl/) してください。
-2. `go get -u github.com/mersenne-sister/smaf825` にて、当プロジェクトをcloneしてください。
+2. `go get -u github.com/but80/smaf825` にて、当プロジェクトをcloneしてください。
 
 注意：こちらの手順でインストールされた `smaf825` は、バージョン番号を表示しません。
 

@@ -2,21 +2,44 @@
 
 SMAFフォーマットの着メロを Arduino + YMF825Board でそれなりに再生するプレイヤーです。
 
-## 準備
+macOS Sierraでのみ動作を確認しています。
+Windowsでも動作したよ！という方はご一報いただけると嬉しいです 🙇
+
+## 準備 (1/2)
+
+以下のいずれかの手順で、CLIコマンド `smaf825` をインストールしてください。
+
+### macOS+Homebrew でのインストール
+
+```bash
+brew tap but80/tap
+brew install smaf825
+```
+
+### 自前でインストール
+
+1. [Releases](https://github.com/but80/smaf825/releases) からアーカイブをダウンロードしてください。
+2. アーカイブに含まれるバイナリを適当な場所に置き、パスを通してください。
+
+### Go 1.8 でのインストール（開発者向け）
 
 1. [Go 1.8 をインストール](https://golang.org/dl/) してください。
 2. `go get -u github.com/mersenne-sister/smaf825` にて、当プロジェクトをcloneしてください。
-   CLIコマンド `smaf825` が同時にインストールされますので、ためしに引数なしで実行してみてください。
-3. 以下のようにして、お手元のMMFファイルが正しくダンプされるかを確認してください。
+
+注意：こちらの手順でインストールされた `smaf825` は、バージョン番号を表示しません。
+
+## 準備 (2/2)
+
+1. 以下のようにして、お手元のMMFファイルが正しくダンプされるかを確認してください。
    
    ```bash
    smaf825 dump music.mmf
    
    smaf825 dump -j music.mmf # JSON形式でもダンプできます
    ```
-4. 以下の記事を参考にハードウェアを用意し、まずは記事通りに公式サンプルを鳴らしてみてください。
+2. 以下の記事を参考にハードウェアを用意し、まずは記事通りに公式サンプルを鳴らしてみてください。
    - [YMF825BoardをArduinoで鳴らしてみる](https://fabble.cc/yamahafsm/ymf825boardarduino)
-5. 無事動作したら、当プロジェクトの [bridge/bridge.ino](bridge/bridge.ino) を参考記事と同様の方法でArduinoに転送してください。
+3. 無事動作したら、当プロジェクトの [bridge/bridge.ino](bridge/bridge.ino) を参考記事と同様の方法でArduinoに転送してください。
 
 ## SMAFの再生
 

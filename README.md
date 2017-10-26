@@ -82,4 +82,4 @@ smaf825 dump -Q -v -j music.mmf | jq -crM '.voices[].ymf825_data'
   `smaf825` を実行中のマシンで他のプロセスによる負荷がかかっている場合、再生がもたつく場合があります。
 - 再生中に `Ctrl+C` で停止後、再度再生しようとすると応答がなくなる不具合が確認されています。
   このような場合、 `Ctrl+C` での停止後にArduinoを接続しているUSB端子をいったん抜き差ししてみてください。
-- [ベロシティカーブの違い](https://web.archive.org/web/20050428062745/http://www.senyou.net:80/~nam/smaf/midv2ma3.html)について、未対応です（すみません）
+- [ベロシティカーブの違い](https://web.archive.org/web/20050428062745/http://www.senyou.net:80/~nam/smaf/midv2ma3.html)について、未対応です（すみません）　[この辺の処理](https://github.com/but80/smaf825/blob/b7dcae7f532a760a1199b21f7e62e1303f70c7be/sequencer/sequencer.go#L233)もちょっと怪しげ

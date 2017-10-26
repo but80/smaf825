@@ -8,7 +8,13 @@ import (
 	"github.com/but80/smaf825/subcmd"
 )
 
-var version = "0.0.1"
+var version string
+
+func init() {
+	if version == "" {
+		version = "unknown"
+	}
+}
 
 func main() {
 	app := cli.NewApp()

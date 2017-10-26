@@ -47,6 +47,10 @@ var Play = cli.Command{
 			Name:  "quiet, q",
 			Usage: `Suppress information messages`,
 		},
+		cli.BoolFlag{
+			Name:  "silent, Q",
+			Usage: `Do not output any messages`,
+		},
 	},
 	Action: func(ctx *cli.Context) error {
 		if ctx.NArg() < 2 || ctx.Int("loop") < 0 ||
@@ -58,6 +62,8 @@ var Play = cli.Command{
 		}
 		if ctx.Bool("debug") {
 			log.Level = log.LogLevel_Debug
+		} else if ctx.Bool("silent") {
+			log.Level = log.LogLevel_None
 		} else if ctx.Bool("quiet") {
 			log.Level = log.LogLevel_Warn
 		}

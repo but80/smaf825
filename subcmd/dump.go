@@ -23,11 +23,38 @@ var Dump = cli.Command{
 			Name:  "json, j",
 			Usage: `Dumps in JSON format`,
 		},
+		cli.BoolFlag{
+			Name:  "voice, v",
+			Usage: `Dumps voice data only`,
+		},
+		cli.BoolFlag{
+			Name:  "exclusive, x",
+			Usage: `Dumps exclusives only`,
+		},
+		cli.BoolFlag{
+			Name:  "debug, d",
+			Usage: `Show debug messages`,
+		},
+		cli.BoolFlag{
+			Name:  "quiet, q",
+			Usage: `Suppress information messages`,
+		},
+		cli.BoolFlag{
+			Name:  "silent, Q",
+			Usage: `Do not output any messages`,
+		},
 	},
 	Action: func(ctx *cli.Context) error {
 		if ctx.NArg() < 1 {
 			cli.ShowCommandHelp(ctx, "dump")
 			os.Exit(1)
+		}
+		if ctx.Bool("debug") {
+			log.Level = log.LogLevel_Debug
+		} else if ctx.Bool("silent") {
+			log.Level = log.LogLevel_None
+		} else if ctx.Bool("quiet") {
+			log.Level = log.LogLevel_Warn
 		}
 		file := ctx.Args()[0]
 		ext := ""
@@ -39,7 +66,15 @@ var Dump = cli.Command{
 		var err error
 		switch ext {
 		case ".mmf", ".spf":
-			data, err = chunk.NewFileChunk(file)
+			fc, err := chunk.NewFileChunk(file)
+			data = fc
+			if err == nil && (ctx.Bool("voice") || ctx.Bool("exclusive")) {
+				exclusives := fc.CollectExclusives()
+				data = exclusives
+				if ctx.Bool("voice") {
+					data = exclusives.Voices()
+				}
+			}
 		case ".vma":
 			data, err = voice.NewVMAVoiceLib(file)
 		case ".vm3":

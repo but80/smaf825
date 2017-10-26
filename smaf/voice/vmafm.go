@@ -9,6 +9,8 @@ import (
 
 	"bytes"
 
+	"encoding/json"
+
 	"github.com/but80/smaf825/smaf/enums"
 	"github.com/but80/smaf825/smaf/util"
 	"github.com/pkg/errors"
@@ -211,6 +213,18 @@ func (v *VMAFMVoice) Bytes(staticLen bool) []byte {
 		b = append(b, v.Operators[op].Bytes()...)
 	}
 	return b
+}
+
+type vmaFMVoiceMarshaler VMAFMVoice
+
+func (v VMAFMVoice) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		vmaFMVoiceMarshaler
+		YMF825Data []int `json:"ymf825_data"`
+	}{
+		vmaFMVoiceMarshaler: vmaFMVoiceMarshaler(v),
+		YMF825Data:          util.BytesToInts(v.ToVM35().Bytes(true, true)),
+	})
 }
 
 func (v *VMAFMVoice) String() string {

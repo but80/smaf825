@@ -10,7 +10,9 @@ import (
 	"unsafe"
 
 	"github.com/but80/smaf825/smaf/enums"
+	"github.com/but80/smaf825/smaf/subtypes"
 	"github.com/but80/smaf825/smaf/util"
+	"github.com/but80/smaf825/smaf/voice"
 	"github.com/pkg/errors"
 )
 
@@ -107,6 +109,59 @@ func (c *FileChunk) Read(rdr io.Reader) error {
 	}
 
 	return nil
+}
+
+type CollectedVoices struct {
+	Voices []*voice.VM35FMVoice `json:"voices"`
+}
+
+func (v *CollectedVoices) String() string {
+	result := []string{}
+	for _, v := range v.Voices {
+		result = append(result, v.String())
+	}
+	return strings.Join(result, "\n\n") + "\n"
+}
+
+type CollectedExclusives struct {
+	Exclusives []*subtypes.Exclusive `json:"voices"`
+}
+
+func (v *CollectedExclusives) String() string {
+	result := []string{}
+	for _, v := range v.Exclusives {
+		result = append(result, v.String())
+	}
+	return strings.Join(result, "\n\n") + "\n"
+}
+
+func (v *CollectedExclusives) Voices() *CollectedVoices {
+	result := &CollectedVoices{Voices: []*voice.VM35FMVoice{}}
+	for _, v := range v.Exclusives {
+		if v.VM35VoicePC != nil {
+			switch vv := v.VM35VoicePC.Voice.(type) {
+			case *voice.VM35FMVoice:
+				result.Voices = append(result.Voices, vv)
+			}
+		}
+		if v.VMAVoicePC != nil {
+			result.Voices = append(result.Voices, v.VMAVoicePC.Voice.ToVM35())
+		}
+	}
+	return result
+}
+
+func (c *FileChunk) CollectExclusives() *CollectedExclusives {
+	voices := &CollectedExclusives{}
+	c.Traverse(func(c Chunk) {
+		switch sc := c.(type) {
+		case *ScoreTrackSetupDataChunk:
+			voices.Exclusives = append(voices.Exclusives, sc.Exclusives...)
+		case *MMMGEXVOChunk:
+			voices.Exclusives = append(voices.Exclusives, sc.Exclusive)
+		}
+	})
+	return voices
 }
 
 func NewFileChunk(file string) (*FileChunk, error) {

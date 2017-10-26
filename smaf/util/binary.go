@@ -36,3 +36,11 @@ func BoolToByte(b bool, v byte) byte {
 	}
 	return 0
 }
+
+func BytesToInts(b []byte) []int {
+	result := make([]int, len(b))
+	for i, v := range b {
+		result[i] = int(v)
+	}
+	return result
+}

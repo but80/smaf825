@@ -27,6 +27,17 @@ Arduinoを接続しているシリアルポートのデバイス名を指定す�
 smaf825 play /dev/tty.usbserial-xxxxxxxx music.mmf
 ```
 
+## YMF825用トーンデータの抽出
+
+`smaf825 dump -v music.mmf` で、MMFやSPFからトーンデータのみを抽出できます。
+
+SMF825用に変換されたデータ列は、JSON形式の出力中の `.voices[].ymf825_data` に含まれます。
+[jq](https://stedolan.github.io/jq/) を用いると以下のように取り出せます。
+
+```bash
+smaf825 dump -Q -v -j music.mmf | jq -crM '.voices[].ymf825_data'
+```
+
 ## 参考情報
 
 - [YMF825Board GitHubPage](https://yamaha-webmusic.github.io/ymf825board/intro/)

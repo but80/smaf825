@@ -238,14 +238,14 @@ func (q *Sequencer) processEvent(sequence *chunk.ScoreTrackSequenceDataChunk, ga
 		vel := float64(cs.Velocity) / 127.0
 		exp := float64(cs.Expression) / 127.0
 		var vol float64
-		if false { // @todo if MA-2/3
-			vol = (vel + exp) * .5
-			if vel == .0 || exp == .0 {
+		if State.IsMA5 {
+			vol = vel + exp - 1.0
+			if vol < .0 {
 				vol = .0
 			}
 		} else {
-			vol = vel + exp - 1.0
-			if vol < .0 {
+			vol = (vel + exp) * .5
+			if vel == .0 || exp == .0 {
 				vol = .0
 			}
 		}

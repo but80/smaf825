@@ -124,10 +124,14 @@ func (t Tones) Swap(i, j int) {
 type SequencerState struct {
 	Channels [16]*ChannelState
 	Tones    Tones
+	IsMA5    bool
 }
 
 func (ss *SequencerState) AddTone(pc *voice.VM35VoicePC) {
 	ss.Tones = append(ss.Tones, pc)
+	if pc.Version == voice.VM35FMVoiceVersion_VM5 {
+		ss.IsMA5 = true
+	}
 }
 
 func (ss *SequencerState) ToneData() []*voice.VM35FMVoice {

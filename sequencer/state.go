@@ -11,7 +11,6 @@ import (
 	"github.com/but80/smaf825/smaf/voice"
 )
 
-// @todo Rename
 type ChannelState struct {
 	KeyControlStatus enums.KeyControlStatus
 	Velocity         int

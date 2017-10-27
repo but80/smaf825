@@ -24,7 +24,7 @@ func ReadVariableInt(allow3bytes bool, rdr io.Reader, rest *int) (int, error) {
 		if (b & 0x80) == 0 {
 			break
 		}
-		result <<= 7 // @todo compare to "result = (result + 1) << 7"
+		result <<= 7
 		i++
 	}
 	return result, nil

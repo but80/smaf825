@@ -6,6 +6,9 @@ import (
 	"bufio"
 	"io"
 
+	"fmt"
+	"strings"
+
 	"github.com/but80/smaf825/smaf/enums"
 	"github.com/but80/smaf825/smaf/log"
 	"github.com/but80/smaf825/smaf/voice"
@@ -14,9 +17,21 @@ import (
 	"github.com/xlab/closer"
 )
 
-const (
-	BaudRate = 76800 //38400
-)
+var BaudRates = []int{300, 600, 1200, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600, 115200}
+
+func IsValidBaudRate(r int) bool {
+	for _, v := range BaudRates {
+		if v == r {
+			return true
+		}
+	}
+	return false
+}
+
+func BaudRateList() string {
+	s := fmt.Sprint(BaudRates)
+	return "(" + strings.Replace(s[1:len(s)-1], " ", "|", -1) + ")"
+}
 
 type SerialPort struct {
 	deviceName string
@@ -25,7 +40,7 @@ type SerialPort struct {
 	selectedCh int
 }
 
-func NewSerialPort(deviceName string) (*SerialPort, error) {
+func NewSerialPort(deviceName string, baudRate int) (*SerialPort, error) {
 	log.Infof("opening serial port")
 	sp := &SerialPort{
 		deviceName: deviceName,
@@ -37,7 +52,7 @@ func NewSerialPort(deviceName string) (*SerialPort, error) {
 		var err error
 		sp.ser, err = serial.Open(serial.OpenOptions{
 			PortName:              deviceName,
-			BaudRate:              BaudRate,
+			BaudRate:              uint(baudRate),
 			DataBits:              8,
 			StopBits:              1,
 			InterCharacterTimeout: 10000,
@@ -89,40 +104,30 @@ func (sp *SerialPort) isNullDevice() bool {
 	return sp.deviceName == "/dev/null" || sp.deviceName == "--"
 }
 
-func (sp *SerialPort) sendData(addr uint8, data []byte) {
+func (sp *SerialPort) sendCommand(c Command) {
 	if sp.closed {
 		return
 	}
-	n := len(data)
-	var hdr []byte
-	if 1 == n {
-		hdr = []byte{addr}
-	} else {
-		hdr = []byte{addr | 0x80, byte(n >> 8 & 255), byte(n & 255)}
-	}
-	_, err := sp.ser.Write(append(hdr, data...))
+	_, err := sp.ser.Write(c.Bytes())
 	if err != nil {
 		panic(errors.WithStack(err))
 	}
 }
 
-func (sp *SerialPort) sendWait(ms int) {
-	if sp.closed {
-		return
-	}
-	data := []byte{0xFF, byte(ms >> 8 & 255), byte(ms & 255)}
-	_, err := sp.ser.Write(data)
-	if err != nil {
-		panic(errors.WithStack(err))
-	}
+func (sp *SerialPort) SendWait(ms int) {
+	sp.sendCommand(&WaitCommand{Msec: ms})
 }
 
 func (sp *SerialPort) SendTerminate() {
-	sp.sendWait(65535)
+	sp.sendCommand(&TerminateCommand{})
+}
+
+func (sp *SerialPort) sendData(addr uint8, data []byte) {
+	sp.sendCommand(NewSPICommand(addr, data))
 }
 
 func (sp *SerialPort) send(addr uint8, data byte) {
-	sp.sendData(addr, []byte{data})
+	sp.sendCommand(NewSPICommand1(addr, data))
 }
 
 func (sp *SerialPort) sendChannelSelect(ch int) {
@@ -148,7 +153,7 @@ func (sp *SerialPort) sendChannelSelect(ch int) {
 func (sp *SerialPort) SendAllOff() {
 	// https://github.com/yamaha-webmusic/ymf825board/blob/master/manual/fbd_spec2.md#sequencer-setting
 	sp.send(8, 0xF6)
-	sp.sendWait(1)
+	sp.SendWait(1)
 	sp.send(8, 0x00)
 }
 

@@ -33,13 +33,17 @@ $ hexdump -C < /dev/ttys007
 
 */
 
+type SequencerOptions struct {
+	Loop, Volume, Gain, SeqVol, BaudRate int
+}
+
 type Sequencer struct {
 	DeviceName string
 	ShowState  bool
 	port       *serial.SerialPort
 }
 
-func (q *Sequencer) Play(mmf *chunk.FileChunk, loop, volume, gain, seqvol int) error {
+func (q *Sequencer) Play(mmf *chunk.FileChunk, opts *SequencerOptions) error {
 	var err error
 	var info *chunk.ContentsInfoChunk
 	var data *chunk.DataChunk
@@ -123,14 +127,14 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, loop, volume, gain, seqvol int) e
 	}
 	//
 	if q.port == nil {
-		q.port, err = serial.NewSerialPort(q.DeviceName)
+		q.port, err = serial.NewSerialPort(q.DeviceName, opts.BaudRate)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 	}
-	q.port.SendMasterVolume(volume)
-	q.port.SendAnalogGain(gain)
-	q.port.SendSeqVol(seqvol)
+	q.port.SendMasterVolume(opts.Volume)
+	q.port.SendAnalogGain(opts.Gain)
+	q.port.SendSeqVol(opts.SeqVol)
 	//
 	log.Debugf("sending voices")
 	q.port.SendAllOff() // トーン設定時は発音をすべて停止
@@ -156,6 +160,7 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, loop, volume, gain, seqvol int) e
 		stopped = true
 	})
 	go func() {
+		loop := opts.Loop
 		iEvent := 0
 		durationRest := 0
 		var pendingEvent event.Event
@@ -344,7 +349,7 @@ func (q *Sequencer) sendCC(sequence *chunk.ScoreTrackSequenceDataChunk, evt *eve
 }
 
 func Test(deviceName string) error {
-	sp, err := serial.NewSerialPort(deviceName)
+	sp, err := serial.NewSerialPort(deviceName, 76800)
 	if err != nil {
 		return errors.WithStack(err)
 	}

@@ -235,11 +235,23 @@ func (q *Sequencer) processEvent(sequence *chunk.ScoreTrackSequenceDataChunk, ga
 	case *event.NoteEvent:
 		cs.Velocity = evt.Velocity
 		cs.NoteOn(evt.Note, evt.GateTime*gateTickCycle) // @todo Add "+1" for tie/slur only
-		vol := float64(cs.Velocity) / 127.0 * float64(cs.Expression) / 127.0
+		vel := float64(cs.Velocity) / 127.0
+		exp := float64(cs.Expression) / 127.0
+		var vol float64
+		if false { // @todo if MA-2/3
+			vol = (vel + exp) * .5
+			if vel == .0 || exp == .0 {
+				vol = .0
+			}
+		} else {
+			vol = vel + exp - 1.0
+			if vol < .0 {
+				vol = .0
+			}
+		}
 		delta := float64(cs.PitchBend) * float64(cs.PitchBendRange) / 8192.0
 		note := evt.Note
 		toneID := cs.ToneID
-		// @todo Fix note and select tone ID for tracks with KeyControlStatus_Off
 		chTo := sequence.ChannelTo(ch, note)
 		if cs.KeyControlStatus == enums.KeyControlStatus_Off {
 			toneID = State.GetToneIDByPCAndDrumNote(cs.BankMSB, cs.BankLSB, cs.PC, note)

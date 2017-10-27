@@ -81,6 +81,7 @@ func NewSerialPort(deviceName string, baudRate int) (*SerialPort, error) {
 				}
 				log.Debugf("IN: " + s)
 				if s == "ready" {
+					// @todo Check version
 					wait <- true
 				}
 			}

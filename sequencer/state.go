@@ -198,7 +198,7 @@ func init() {
 			ToneID:         0,
 			Panpot:         64,
 			Volume:         100,
-			Expression:     100,
+			Expression:     127,
 			PitchBendRange: 2,
 		}
 	}

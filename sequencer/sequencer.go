@@ -33,13 +33,17 @@ $ hexdump -C < /dev/ttys007
 
 */
 
+type SequencerOptions struct {
+	Loop, Volume, Gain, SeqVol, BaudRate int
+}
+
 type Sequencer struct {
 	DeviceName string
 	ShowState  bool
 	port       *serial.SerialPort
 }
 
-func (q *Sequencer) Play(mmf *chunk.FileChunk, loop, volume, gain, seqvol int) error {
+func (q *Sequencer) Play(mmf *chunk.FileChunk, opts *SequencerOptions) error {
 	var err error
 	var info *chunk.ContentsInfoChunk
 	var data *chunk.DataChunk
@@ -123,14 +127,14 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, loop, volume, gain, seqvol int) e
 	}
 	//
 	if q.port == nil {
-		q.port, err = serial.NewSerialPort(q.DeviceName)
+		q.port, err = serial.NewSerialPort(q.DeviceName, opts.BaudRate)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 	}
-	q.port.SendMasterVolume(volume)
-	q.port.SendAnalogGain(gain)
-	q.port.SendSeqVol(seqvol)
+	q.port.SendMasterVolume(opts.Volume)
+	q.port.SendAnalogGain(opts.Gain)
+	q.port.SendSeqVol(opts.SeqVol)
 	//
 	log.Debugf("sending voices")
 	q.port.SendAllOff() // トーン設定時は発音をすべて停止
@@ -156,6 +160,7 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, loop, volume, gain, seqvol int) e
 		stopped = true
 	})
 	go func() {
+		loop := opts.Loop
 		iEvent := 0
 		durationRest := 0
 		var pendingEvent event.Event
@@ -230,11 +235,23 @@ func (q *Sequencer) processEvent(sequence *chunk.ScoreTrackSequenceDataChunk, ga
 	case *event.NoteEvent:
 		cs.Velocity = evt.Velocity
 		cs.NoteOn(evt.Note, evt.GateTime*gateTickCycle) // @todo Add "+1" for tie/slur only
-		vol := float64(cs.Velocity) / 127.0 * float64(cs.Expression) / 127.0
+		vel := float64(cs.Velocity) / 127.0
+		exp := float64(cs.Expression) / 127.0
+		var vol float64
+		if State.IsMA5 {
+			vol = vel + exp - 1.0
+			if vol < .0 {
+				vol = .0
+			}
+		} else {
+			vol = (vel + exp) * .5
+			if vel == .0 || exp == .0 {
+				vol = .0
+			}
+		}
 		delta := float64(cs.PitchBend) * float64(cs.PitchBendRange) / 8192.0
 		note := evt.Note
 		toneID := cs.ToneID
-		// @todo Fix note and select tone ID for tracks with KeyControlStatus_Off
 		chTo := sequence.ChannelTo(ch, note)
 		if cs.KeyControlStatus == enums.KeyControlStatus_Off {
 			toneID = State.GetToneIDByPCAndDrumNote(cs.BankMSB, cs.BankLSB, cs.PC, note)
@@ -344,7 +361,7 @@ func (q *Sequencer) sendCC(sequence *chunk.ScoreTrackSequenceDataChunk, evt *eve
 }
 
 func Test(deviceName string) error {
-	sp, err := serial.NewSerialPort(deviceName)
+	sp, err := serial.NewSerialPort(deviceName, 76800)
 	if err != nil {
 		return errors.WithStack(err)
 	}

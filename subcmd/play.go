@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/but80/smaf825/sequencer"
+	"github.com/but80/smaf825/serial"
 	"github.com/but80/smaf825/smaf/chunk"
 	"github.com/but80/smaf825/smaf/log"
 	"github.com/urfave/cli"
@@ -39,6 +40,11 @@ var Play = cli.Command{
 			Usage: `Loop count (0: infinite)`,
 			Value: 1,
 		},
+		cli.IntFlag{
+			Name:  "baudrate, r",
+			Usage: `Baud rate ` + serial.BaudRateList(),
+			Value: 57600,
+		},
 		cli.BoolFlag{
 			Name:  "debug, d",
 			Usage: `Show debug messages`,
@@ -56,7 +62,8 @@ var Play = cli.Command{
 		if ctx.NArg() < 2 || ctx.Int("loop") < 0 ||
 			ctx.Int("volume") < 0 || 63 < ctx.Int("volume") ||
 			ctx.Int("gain") < 0 || 3 < ctx.Int("gain") ||
-			ctx.Int("seqvol") < 0 || 31 < ctx.Int("seqvol") {
+			ctx.Int("seqvol") < 0 || 31 < ctx.Int("seqvol") ||
+			!serial.IsValidBaudRate(ctx.Int("baudrate")) {
 			cli.ShowCommandHelp(ctx, "play")
 			os.Exit(1)
 		}
@@ -76,7 +83,14 @@ var Play = cli.Command{
 			DeviceName: args[0],
 			ShowState:  ctx.Bool("state"),
 		}
-		err = q.Play(mmf, ctx.Int("loop"), ctx.Int("volume"), ctx.Int("gain"), ctx.Int("seqvol"))
+		opts := &sequencer.SequencerOptions{
+			Loop:     ctx.Int("loop"),
+			Volume:   ctx.Int("volume"),
+			Gain:     ctx.Int("gain"),
+			SeqVol:   ctx.Int("seqvol"),
+			BaudRate: ctx.Int("baudrate"),
+		}
+		err = q.Play(mmf, opts)
 		if err != nil {
 			return cli.NewExitError(err, 1)
 		}

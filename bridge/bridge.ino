@@ -7,7 +7,7 @@
 
 //0 :5V 1:3.3V
 #define OUTPUT_power 0
-#define BAUD_RATE 76800 //38400
+#define BAUD_RATE 57600
 #define SERIAL_READ_WAIT_US (1000000 * 10 / (BAUD_RATE) + 1)
 
 #include <SPI.h>

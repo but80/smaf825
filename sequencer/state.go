@@ -11,7 +11,6 @@ import (
 	"github.com/but80/smaf825/smaf/voice"
 )
 
-// @todo Rename
 type ChannelState struct {
 	KeyControlStatus enums.KeyControlStatus
 	Velocity         int
@@ -125,10 +124,14 @@ func (t Tones) Swap(i, j int) {
 type SequencerState struct {
 	Channels [16]*ChannelState
 	Tones    Tones
+	IsMA5    bool
 }
 
 func (ss *SequencerState) AddTone(pc *voice.VM35VoicePC) {
 	ss.Tones = append(ss.Tones, pc)
+	if pc.Version == voice.VM35FMVoiceVersion_VM5 {
+		ss.IsMA5 = true
+	}
 }
 
 func (ss *SequencerState) ToneData() []*voice.VM35FMVoice {
@@ -199,7 +202,7 @@ func init() {
 			ToneID:         0,
 			Panpot:         64,
 			Volume:         100,
-			Expression:     100,
+			Expression:     127,
 			PitchBendRange: 2,
 		}
 	}

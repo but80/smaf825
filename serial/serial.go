@@ -57,6 +57,7 @@ func NewSerialPort(deviceName string, baudRate int) (*SerialPort, error) {
 			StopBits:              1,
 			InterCharacterTimeout: 10000,
 			MinimumReadSize:       0,
+			ParityMode:            serial.PARITY_EVEN,
 		})
 		if err != nil {
 			return nil, errors.WithStack(err)

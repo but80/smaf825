@@ -142,7 +142,7 @@ void _testplay() {
 }
 
 void setup() {
-	Serial.begin(BAUD_RATE);
+	Serial.begin(BAUD_RATE, SERIAL_8E1);
 	Serial.println("setup");
 	pinMode(PIN_RST_N, OUTPUT);
 	pinMode(PIN_SS, OUTPUT);

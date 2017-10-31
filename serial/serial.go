@@ -9,12 +9,19 @@ import (
 	"fmt"
 	"strings"
 
+	"strconv"
+
 	"github.com/but80/smaf825/smaf/enums"
 	"github.com/but80/smaf825/smaf/log"
 	"github.com/but80/smaf825/smaf/voice"
 	"github.com/jacobsa/go-serial/serial"
 	"github.com/pkg/errors"
 	"github.com/xlab/closer"
+)
+
+const (
+	SKETCH_VERSION_GTE = 120
+	SKETCH_VERSION_LT  = 130
 )
 
 var BaudRates = []int{300, 600, 1200, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600, 115200}
@@ -34,10 +41,11 @@ func BaudRateList() string {
 }
 
 type SerialPort struct {
-	deviceName string
-	ser        io.ReadWriteCloser
-	closed     bool
-	selectedCh int
+	deviceName    string
+	ser           io.ReadWriteCloser
+	closed        bool
+	selectedCh    int
+	sketchVersion int
 }
 
 func NewSerialPort(deviceName string, baudRate int) (*SerialPort, error) {
@@ -55,9 +63,9 @@ func NewSerialPort(deviceName string, baudRate int) (*SerialPort, error) {
 			BaudRate:              uint(baudRate),
 			DataBits:              8,
 			StopBits:              1,
+			ParityMode:            serial.PARITY_EVEN,
 			InterCharacterTimeout: 10000,
 			MinimumReadSize:       0,
-			ParityMode:            serial.PARITY_EVEN,
 		})
 		if err != nil {
 			return nil, errors.WithStack(err)
@@ -65,29 +73,46 @@ func NewSerialPort(deviceName string, baudRate int) (*SerialPort, error) {
 		closer.Bind(func() {
 			sp.Close()
 		})
-		wait := make(chan bool)
+		wait := make(chan error)
 		go func() {
 			reader := bufio.NewReaderSize(sp.ser, 2048)
 			for !sp.closed {
 				line, _, err := reader.ReadLine()
 				if err == io.EOF {
-					continue
+					if wait != nil {
+						wait <- err
+					}
+					return
 				}
 				if err != nil {
-					log.Warnf("ERR: " + err.Error())
+					log.Warnf("Serial port error: " + err.Error())
 				}
 				s := string(line)
 				if s == "" {
 					continue
 				}
-				log.Debugf("IN: " + s)
+				log.Debugf("IN: %s", s)
+				if wait == nil {
+					continue
+				}
 				if s == "ready" {
-					// @todo Check version
-					wait <- true
+					if !(SKETCH_VERSION_GTE <= sp.sketchVersion && sp.sketchVersion < SKETCH_VERSION_LT) {
+						wait <- fmt.Errorf(
+							`Sketch version mismatch (want %d <= version < %d, got %d). Please rewrite "bridge/bridge.ino" onto Arduino.`,
+							SKETCH_VERSION_GTE, SKETCH_VERSION_LT, sp.sketchVersion,
+						)
+					}
+					close(wait)
+					wait = nil
+				} else if 8 < len(s) && s[:8] == "version " {
+					sp.sketchVersion, _ = strconv.Atoi(s[8:])
 				}
 			}
 		}()
-		<-wait
+		err = <-wait
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
 	}
 	return sp, nil
 }

@@ -1,3 +1,5 @@
+#define VERSION 120
+
 // Conditions only for Arduino UNO
 #define PIN_RST_N 9
 #define PIN_SS 10
@@ -33,7 +35,7 @@ void set_rst_pin(int val) {
 }
 
 void if_write(char addr, unsigned const char* data, int size) {
-	// Serial.print("R");
+	// Serial.print("#R");
 	// Serial.print(addr, DEC);
 	set_ss_pin(LOW);
 	SPI.transfer(addr);
@@ -143,22 +145,24 @@ void _testplay() {
 
 void setup() {
 	Serial.begin(BAUD_RATE, SERIAL_8E1);
-	Serial.println("setup");
+	Serial.println("#setup");
 	pinMode(PIN_RST_N, OUTPUT);
 	pinMode(PIN_SS, OUTPUT);
 	set_ss_pin(HIGH);
 	
-	Serial.println("init spi");
+	Serial.println("#init spi");
 	SPI.setBitOrder(MSBFIRST);
 	SPI.setClockDivider(SPI_CLOCK_DIV8); // 16/8 MHz (on Arduino Nano)
 	SPI.setDataMode(SPI_MODE0);
 	SPI.begin();
 	
-	Serial.println("init ymf825");
+	Serial.println("#init ymf825");
 	init_825();
 
 	// _testplay();
 
+	Serial.print("version ");
+	Serial.println(VERSION, DEC);
 	Serial.println("ready");
 }
 
@@ -178,11 +182,12 @@ void loop() {
 	addr &= 0x7F;
 	if (addr == 0x7F) {
 		if (size == 0xFFFF) {
+			// Serial.print("#T");
 			while (Serial.available()) Serial.read();
 			Serial.end();
 			return;
 		} else {
-			Serial.print("S");
+			Serial.print("#W");
 			Serial.println(size, DEC);
 			delay(size);
 		}

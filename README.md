@@ -54,6 +54,14 @@ smaf825 play /dev/tty.usbserial-xxxxxxxx music.mmf
 smaf825 play comX music.mmf
 ```
 
+以下のようにオプションを与えることで、音量を調整できます。
+
+```bash
+# -g: Gain (0..3, default=1)
+# -v: Analog Volume (0..63, default=48)
+smaf825 play -g 3 -v 63 /dev/tty.usbserial-xxxxxxxx music.mmf
+```
+
 ## YMF825用トーンデータの抽出
 
 `smaf825 dump -v music.mmf` で、MMFやSPFからトーンデータのみを抽出できます。

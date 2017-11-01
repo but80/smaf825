@@ -166,18 +166,66 @@ void setup() {
 	Serial.println("ready");
 }
 
+#define BUFSIZE 320
+unsigned char buf[BUFSIZE];
+int bufHead = 0;
+int bufLen = 0;
+int readOnDemand = 0;
+
 int read() {
-	while (!Serial.available()) delayMicroseconds(SERIAL_READ_WAIT_US);
-	int v = Serial.read();
+	if (bufLen == 0) {
+		while (!Serial.available()) delayMicroseconds(SERIAL_READ_WAIT_US);
+		readOnDemand++;
+		if (6 <= readOnDemand) {
+			Serial.println("=6");
+			readOnDemand = 0;
+		}
+	return Serial.read();
+	}
+	int v = buf[bufHead++];
+	bufHead %= BUFSIZE;
+	bufLen--;
 	return v;
 }
 
+unsigned long waitUntil = 0;
+bool first = true;
+
 void loop() {
+	if (first || micros() < waitUntil) {
+		int read = readOnDemand;
+		readOnDemand = 0;
+		while (bufLen < BUFSIZE && Serial.available()) {
+			buf[(bufHead+bufLen) % BUFSIZE] = Serial.read();
+			bufLen++;
+			read++;
+			if (60 <= read) {
+				Serial.print("=");
+				Serial.println(read, DEC);
+				read = 0;
+			}
+			if (first) {
+				delay(100);
+				first = false;
+			}
+		}
+		if (micros() + SERIAL_READ_WAIT_US * 3 < waitUntil) {
+			readOnDemand += read;
+			return;
+		}
+		if (0 < read) {
+			Serial.print("=");
+			Serial.println(read, DEC);
+		}
+		return;
+	}
+
 	int addr = read();
 	int size = 1;
 	if (addr & 0x80) {
-		size = read() << 8;
-		size |= read();
+		int h = read();
+		int l = read();
+		size = h << 8 | l;
 	}
 	addr &= 0x7F;
 	if (addr == 0x7F) {
@@ -187,9 +235,9 @@ void loop() {
 			Serial.end();
 			return;
 		} else {
-			Serial.print("#W");
-			Serial.println(size, DEC);
-			delay(size);
+			// Serial.print("#W");
+			// Serial.println(size, DEC);
+			waitUntil = micros() + (unsigned long)size * 1000;
 		}
 	} else {
 		set_ss_pin(LOW);

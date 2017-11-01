@@ -10,6 +10,9 @@ import (
 	"strings"
 
 	"strconv"
+	"time"
+
+	"sync"
 
 	"github.com/but80/smaf825/smaf/enums"
 	"github.com/but80/smaf825/smaf/log"
@@ -20,8 +23,9 @@ import (
 )
 
 const (
-	SKETCH_VERSION_GTE = 120
-	SKETCH_VERSION_LT  = 130
+	SKETCH_VERSION_GTE  = 120
+	SKETCH_VERSION_LT   = 130
+	ARDUINO_BUFFER_SIZE = 60
 )
 
 var BaudRates = []int{300, 600, 1200, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600, 115200}
@@ -46,6 +50,11 @@ type SerialPort struct {
 	closed        bool
 	selectedCh    int
 	sketchVersion int
+	commands      []Command
+	buffer        []byte
+	sentTotal     int
+	sendable      int
+	bufferMutex   sync.Mutex
 }
 
 func NewSerialPort(deviceName string, baudRate int) (*SerialPort, error) {
@@ -53,6 +62,9 @@ func NewSerialPort(deviceName string, baudRate int) (*SerialPort, error) {
 	sp := &SerialPort{
 		deviceName: deviceName,
 		selectedCh: -1,
+		commands:   []Command{},
+		buffer:     []byte{},
+		sendable:   ARDUINO_BUFFER_SIZE,
 	}
 	if sp.isNullDevice() {
 		sp.closed = true
@@ -89,6 +101,13 @@ func NewSerialPort(deviceName string, baudRate int) (*SerialPort, error) {
 				}
 				s := string(line)
 				if s == "" {
+					continue
+				}
+				if s[0] == '=' {
+					readBytes, err := strconv.Atoi(s[1:])
+					if err == nil {
+						sp.sendable += readBytes
+					}
 					continue
 				}
 				log.Debugf("IN: %s", s)
@@ -131,18 +150,76 @@ func (sp *SerialPort) isNullDevice() bool {
 	return sp.deviceName == "/dev/null" || sp.deviceName == "--"
 }
 
-func (sp *SerialPort) sendCommand(c Command) {
+func (sp *SerialPort) Flush() bool {
+	sp.bufferMutex.Lock()
+	defer sp.bufferMutex.Unlock()
+	sp.flush()
+	return len(sp.buffer) == 0
+}
+
+func (sp *SerialPort) flush() {
 	if sp.closed {
 		return
 	}
-	_, err := sp.ser.Write(c.Bytes())
+	if 0 < len(sp.commands) {
+		for _, c := range sp.commands {
+			sp.buffer = append(sp.buffer, c.Bytes()...)
+		}
+		sp.commands = []Command{}
+	}
+	l := len(sp.buffer)
+	if sp.sendable < l {
+		l = sp.sendable
+	}
+	if l <= 0 {
+		return
+	}
+	//log.Debugf("sending %d", l)
+	n, err := sp.ser.Write(sp.buffer[:l])
 	if err != nil {
 		panic(errors.WithStack(err))
 	}
+	sp.buffer = sp.buffer[n:]
+	sp.sentTotal += n
+	sp.sendable -= n
+	//log.Debugf("sent %d sendable=%d", n, sp.sendable)
 }
 
-func (sp *SerialPort) SendWait(ms int) {
-	sp.sendCommand(&WaitCommand{Msec: ms})
+var sendCommandOnce sync.Once
+
+func (sp *SerialPort) sendCommand(c Command) {
+	sendCommandOnce.Do(func() {
+		ticker := time.NewTicker(8 * time.Millisecond)
+		// @todo stop goroutine
+		go func() {
+			for range ticker.C {
+				sp.Flush()
+			}
+		}()
+	})
+	sp.bufferMutex.Lock()
+	defer sp.bufferMutex.Unlock()
+	sp.commands = append(sp.commands, c)
+}
+
+func (sp *SerialPort) SendWait(msec int) {
+	new := true
+	sp.bufferMutex.Lock()
+	defer func() {
+		sp.bufferMutex.Unlock()
+		if new {
+			sp.sendCommand(&WaitCommand{Msec: msec})
+		}
+	}()
+	if len(sp.commands) == 0 {
+		return
+	}
+	last, ok := sp.commands[len(sp.commands)-1].(*WaitCommand)
+	if !ok {
+		return
+	}
+	last.Msec += msec
+	new = false
 }
 
 func (sp *SerialPort) SendTerminate() {

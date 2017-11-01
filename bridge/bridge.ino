@@ -1,4 +1,5 @@
 #define VERSION 120
+#define BUFSIZE 1024
 
 // Conditions only for Arduino UNO
 #define PIN_RST_N 9
@@ -166,7 +167,6 @@ void setup() {
 	Serial.println("ready");
 }
 
-#define BUFSIZE 320
 unsigned char buf[BUFSIZE];
 int bufHead = 0;
 int bufLen = 0;
@@ -216,6 +216,10 @@ void loop() {
 		if (0 < read) {
 			Serial.print("=");
 			Serial.println(read, DEC);
+			// if (9 < bufLen) {
+			// 	Serial.print("#B");
+			// 	Serial.println(bufLen, DEC);
+			// }
 		}
 		return;
 	}

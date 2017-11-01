@@ -158,6 +158,7 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, opts *SequencerOptions) error {
 	stopped := false
 	closer.Bind(func() {
 		stopped = true
+		q.port.SendAllOff()
 	})
 	go func() {
 		loop := opts.Loop

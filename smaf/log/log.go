@@ -39,7 +39,7 @@ var indent = 0
 
 func Debugf(f string, args ...interface{}) {
 	if LogLevel_Debug <= Level {
-		cyan.Fprintf(os.Stderr, "[DEBUG] "+strings.Repeat("  ", indent)+f+"\n", args...)
+		cyan.Fprintf(os.Stderr, strings.Repeat("  ", indent)+f+"\n", args...)
 	}
 }
 

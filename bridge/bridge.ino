@@ -1,3 +1,6 @@
+#define VERSION 120
+#define BUFSIZE 1024
+
 // Conditions only for Arduino UNO
 #define PIN_RST_N 9
 #define PIN_SS 10
@@ -33,7 +36,7 @@ void set_rst_pin(int val) {
 }
 
 void if_write(char addr, unsigned const char* data, int size) {
-	// Serial.print("R");
+	// Serial.print("#R");
 	// Serial.print(addr, DEC);
 	set_ss_pin(LOW);
 	SPI.transfer(addr);
@@ -142,49 +145,103 @@ void _testplay() {
 }
 
 void setup() {
-	Serial.begin(BAUD_RATE);
-	Serial.println("setup");
+	Serial.begin(BAUD_RATE, SERIAL_8E1);
+	Serial.println("#setup");
 	pinMode(PIN_RST_N, OUTPUT);
 	pinMode(PIN_SS, OUTPUT);
 	set_ss_pin(HIGH);
 	
-	Serial.println("init spi");
+	Serial.println("#init spi");
 	SPI.setBitOrder(MSBFIRST);
 	SPI.setClockDivider(SPI_CLOCK_DIV8); // 16/8 MHz (on Arduino Nano)
 	SPI.setDataMode(SPI_MODE0);
 	SPI.begin();
 	
-	Serial.println("init ymf825");
+	Serial.println("#init ymf825");
 	init_825();
 
 	// _testplay();
 
+	Serial.print("version ");
+	Serial.println(VERSION, DEC);
 	Serial.println("ready");
 }
 
+unsigned char buf[BUFSIZE];
+int bufHead = 0;
+int bufLen = 0;
+int readOnDemand = 0;
+
 int read() {
-	while (!Serial.available()) delayMicroseconds(SERIAL_READ_WAIT_US);
-	int v = Serial.read();
+	if (bufLen == 0) {
+		while (!Serial.available()) delayMicroseconds(SERIAL_READ_WAIT_US);
+		readOnDemand++;
+		if (6 <= readOnDemand) {
+			Serial.println("=6");
+			readOnDemand = 0;
+		}
+	return Serial.read();
+	}
+	int v = buf[bufHead++];
+	bufHead %= BUFSIZE;
+	bufLen--;
 	return v;
 }
 
+unsigned long waitUntil = 0;
+bool first = true;
+
 void loop() {
+	if (first || micros() < waitUntil) {
+		int read = readOnDemand;
+		readOnDemand = 0;
+		while (bufLen < BUFSIZE && Serial.available()) {
+			buf[(bufHead+bufLen) % BUFSIZE] = Serial.read();
+			bufLen++;
+			read++;
+			if (60 <= read) {
+				Serial.print("=");
+				Serial.println(read, DEC);
+				read = 0;
+			}
+			if (first) {
+				delay(100);
+				first = false;
+			}
+		}
+		if (micros() + SERIAL_READ_WAIT_US * 3 < waitUntil) {
+			readOnDemand += read;
+			return;
+		}
+		if (0 < read) {
+			Serial.print("=");
+			Serial.println(read, DEC);
+			// if (9 < bufLen) {
+			// 	Serial.print("#B");
+			// 	Serial.println(bufLen, DEC);
+			// }
+		}
+		return;
+	}
+
 	int addr = read();
 	int size = 1;
 	if (addr & 0x80) {
-		size = read() << 8;
-		size |= read();
+		int h = read();
+		int l = read();
+		size = h << 8 | l;
 	}
 	addr &= 0x7F;
 	if (addr == 0x7F) {
 		if (size == 0xFFFF) {
+			// Serial.print("#T");
 			while (Serial.available()) Serial.read();
 			Serial.end();
 			return;
 		} else {
-			Serial.print("S");
-			Serial.println(size, DEC);
-			delay(size);
+			// Serial.print("#W");
+			// Serial.println(size, DEC);
+			waitUntil = micros() + (unsigned long)size * 1000;
 		}
 	} else {
 		set_ss_pin(LOW);

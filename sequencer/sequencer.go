@@ -153,18 +153,21 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, opts *SequencerOptions) error {
 	log.Debugf("common time base = %d msec", timeBase)
 	log.Debugf("durationTickCycle = %d", durationTickCycle)
 	log.Debugf("gateTickCycle = %d", gateTickCycle)
-	ticker := time.NewTicker(time.Duration(timeBase) * time.Millisecond)
+	ticker := time.NewTicker(time.Duration(timeBase)*time.Millisecond - time.Millisecond)
 	end := make(chan bool)
 	stopped := false
 	closer.Bind(func() {
 		stopped = true
+		q.port.SendAllOff()
 	})
 	go func() {
 		loop := opts.Loop
 		iEvent := 0
 		durationRest := 0
+		q.port.SendWait(1000)
 		var pendingEvent event.Event
 		for !stopped && (iEvent < len(sequence.Events) || State.HasRest()) {
+			q.port.SendWait(timeBase)
 			select {
 			case <-ticker.C:
 				keyOffFound := false
@@ -218,6 +221,9 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, opts *SequencerOptions) error {
 	<-end
 	ticker.Stop()
 	q.port.SendAllOff()
+	for !q.port.Flush() {
+		time.Sleep(time.Millisecond)
+	}
 	return nil
 }
 

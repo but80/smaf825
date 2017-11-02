@@ -7,6 +7,8 @@ import (
 
 	"encoding/binary"
 
+	"sort"
+
 	"github.com/but80/smaf825/smaf/enums"
 	"github.com/but80/smaf825/smaf/event"
 	"github.com/but80/smaf825/smaf/huffman"
@@ -14,6 +16,81 @@ import (
 	"github.com/but80/smaf825/smaf/util"
 	"github.com/pkg/errors"
 )
+
+type eventCandidate struct {
+	*event.DurationEventPair
+	index int
+}
+
+type eventCandidates []eventCandidate
+
+func (p eventCandidates) Len() int {
+	return len(p)
+}
+
+func (p eventCandidates) Less(i, j int) bool {
+	if p[i].Duration == p[j].Duration {
+		return p[i].index < p[j].index
+	} else {
+		return p[i].Duration < p[j].Duration
+	}
+}
+
+func (p eventCandidates) Swap(i, j int) {
+	p[i], p[j] = p[j], p[i]
+}
+
+func MergeSequenceDataChunks(chunks []*ScoreTrackSequenceDataChunk) *ScoreTrackSequenceDataChunk {
+	if len(chunks) == 1 {
+		return chunks[0]
+	}
+	log.Debugf("merging %d sequence data chunks", len(chunks))
+	for i, c := range chunks {
+		for _, e := range c.Events {
+			e.Event.ShiftChannel(i * 4)
+		}
+	}
+	result := &ScoreTrackSequenceDataChunk{
+		ChunkHeader: &ChunkHeader{
+			Signature: chunks[0].ChunkHeader.Signature,
+		},
+		FormatType: chunks[0].FormatType,
+		Events:     []event.DurationEventPair{},
+	}
+	if len(chunks) == 0 {
+		return result
+	}
+	e := make([]int, len(chunks))
+	for {
+		candidates := eventCandidates{}
+		for i, c := range chunks {
+			if e[i] < len(c.Events) {
+				candidates = append(candidates, eventCandidate{
+					DurationEventPair: &c.Events[e[i]],
+					index:             i,
+				})
+			}
+		}
+		if len(candidates) == 0 {
+			break
+		}
+		sort.Sort(candidates)
+		dur := candidates[0].Duration
+		log.Debugf("dur %d", dur)
+		for i, candidate := range candidates {
+			if candidate.Duration == dur {
+				if 0 < i {
+					candidate.Duration = 0
+				}
+				result.Events = append(result.Events, *candidate.DurationEventPair)
+				e[candidate.index]++
+			} else {
+				candidate.Duration -= dur
+			}
+		}
+	}
+	return result
+}
 
 type ScoreTrackSequenceDataChunk struct {
 	*ChunkHeader      `json:"chunk_header"`
@@ -24,6 +101,7 @@ type ScoreTrackSequenceDataChunk struct {
 	UsedNoteCount     map[enums.Channel]int                `json:"-"`
 	NoteToChannel     map[enums.Channel]map[enums.Note]int `json:"-"`
 	ChannelToChannels map[enums.Channel][]int              `json:"-"`
+	UsedPC            map[uint32]bool                      `json:"-"`
 	IgnoredPC         map[uint32]bool                      `json:"-"`
 }
 
@@ -100,6 +178,7 @@ func (c *ScoreTrackSequenceDataChunk) Read(rdr io.Reader) error {
 func (c *ScoreTrackSequenceDataChunk) AggregateUsage(channelsToSplit []enums.Channel) {
 	c.IsChannelUsed = map[enums.Channel]bool{}
 	usedNotes := map[enums.Channel]map[enums.Note]bool{}
+	c.UsedPC = map[uint32]bool{}
 	pc := map[enums.Channel]uint32{}
 	for _, e := range c.Events {
 		ch := e.Event.GetChannel()
@@ -112,7 +191,6 @@ func (c *ScoreTrackSequenceDataChunk) AggregateUsage(channelsToSplit []enums.Cha
 				pc[ch] = pc[ch]&0xFF00FFFF | uint32(evt.Value)<<16
 			}
 		case *event.ProgramChangeEvent:
-			// @todo multiple PC in one channel
 			pc[ch] = pc[ch]&0xFFFF00FF | uint32(evt.PC)<<8
 		case *event.NoteEvent:
 			c.IsChannelUsed[ch] = true
@@ -120,6 +198,7 @@ func (c *ScoreTrackSequenceDataChunk) AggregateUsage(channelsToSplit []enums.Cha
 				usedNotes[ch] = map[enums.Note]bool{}
 			}
 			usedNotes[ch][evt.Note] = true
+			c.UsedPC[pc[ch]] = true
 		}
 	}
 	// @todo Check available channel count
@@ -174,7 +253,8 @@ func (c *ScoreTrackSequenceDataChunk) AggregateUsage(channelsToSplit []enums.Cha
 }
 
 func (c *ScoreTrackSequenceDataChunk) IsIgnoredPC(bankMSB, bankLSB, PC int, drumNote enums.Note) bool {
-	return c.IgnoredPC[uint32(bankMSB)<<24|uint32(bankLSB)<<16|uint32(PC)<<8|uint32(drumNote)]
+	pc := uint32(bankMSB)<<24 | uint32(bankLSB)<<16 | uint32(PC)<<8
+	return c.UsedPC[pc] && c.IgnoredPC[pc|uint32(drumNote)]
 }
 
 func (c *ScoreTrackSequenceDataChunk) ChannelTo(orgCh enums.Channel, note enums.Note) int {

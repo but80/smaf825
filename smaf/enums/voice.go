@@ -82,6 +82,19 @@ func (o BasicOctave) String() string {
 	return "undefined"
 }
 
+func (o BasicOctave) NoteDiff() Note {
+	switch o {
+	case 0:
+		return Note(1 * 12)
+	case 2:
+		return Note(-1 * 12)
+	case 3:
+		return Note(-2 * 12)
+	default:
+		return Note(0 * 12)
+	}
+}
+
 type Panpot int
 
 const (

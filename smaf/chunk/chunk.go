@@ -47,7 +47,7 @@ func (hdr *ChunkHeader) String() string {
 	ss := fmt.Sprintf("%c%c%c", s>>24, s>>16&255, s>>8&255)
 	switch ss {
 	case "MTR", "ATR", "GTR", "Dch":
-		ss += fmt.Sprintf("*(0x%02X)", s&255)
+		ss += fmt.Sprintf("*(0x%02X)", uint32(s)&255)
 	default:
 		ss += fmt.Sprintf("%c", s&255)
 	}

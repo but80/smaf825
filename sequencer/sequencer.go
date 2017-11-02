@@ -43,6 +43,20 @@ type Sequencer struct {
 	port       *serial.SerialPort
 }
 
+type DebugFlags struct {
+	Tone       bool
+	Volume     bool
+	Octave     bool
+	KeyControl bool
+}
+
+var debugFlags = &DebugFlags{
+	Tone:       false,
+	Volume:     false,
+	Octave:     false,
+	KeyControl: false,
+}
+
 func (q *Sequencer) Play(mmf *chunk.FileChunk, opts *SequencerOptions) error {
 	var err error
 	var info *chunk.ContentsInfoChunk
@@ -102,6 +116,9 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, opts *SequencerOptions) error {
 	channelsToSplit := []enums.Channel{}
 	if score != nil {
 		for ch, st := range score.ChannelStatus {
+			if debugFlags.KeyControl {
+				st.KeyControlStatus = enums.KeyControlStatus_On
+			}
 			State.Channels[ch].KeyControlStatus = st.KeyControlStatus
 			if st.KeyControlStatus == enums.KeyControlStatus_Off {
 				channelsToSplit = append(channelsToSplit, ch)
@@ -115,12 +132,12 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, opts *SequencerOptions) error {
 		switch x.Type {
 		case enums.ExclusiveType_VM35Voice:
 			v := x.VM35VoicePC
-			if v != nil && !sequence.IsIgnoredPC(v.BankMSB, v.BankLSB, v.PC, v.DrumNote) {
+			if v != nil && v.VoiceType == enums.VoiceType_FM && !sequence.IsIgnoredPC(v.BankMSB, v.BankLSB, v.PC, v.DrumNote) {
 				State.AddTone(v)
 			}
 		case enums.ExclusiveType_VMAVoice:
 			v := x.VMAVoicePC
-			if v != nil {
+			if v != nil && !sequence.IsIgnoredPC(0, v.Bank, v.PC, 0) {
 				State.AddTone(v.ToVM35())
 			}
 		}
@@ -138,7 +155,13 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, opts *SequencerOptions) error {
 	//
 	log.Debugf("sending voices")
 	q.port.SendAllOff() // トーン設定時は発音をすべて停止
-	q.port.SendTones(State.ToneData())
+	if debugFlags.Tone {
+		q.port.SendTones([]*voice.VM35FMVoice{
+			voice.NewDemoVM35FMVoice(),
+		})
+	} else {
+		q.port.SendTones(State.ToneData())
+	}
 	//
 	var timeBase, durationTickCycle, gateTickCycle int
 	if score == nil {
@@ -255,6 +278,9 @@ func (q *Sequencer) processEvent(sequence *chunk.ScoreTrackSequenceDataChunk, ga
 				vol = .0
 			}
 		}
+		if debugFlags.Volume {
+			vol = 1.0
+		}
 		delta := float64(cs.PitchBend) * float64(cs.PitchBendRange) / 8192.0
 		note := evt.Note
 		toneID := cs.ToneID
@@ -264,6 +290,9 @@ func (q *Sequencer) processEvent(sequence *chunk.ScoreTrackSequenceDataChunk, ga
 			if 0 <= toneID {
 				note = State.Tones[toneID].Voice.(*voice.VM35FMVoice).DrumKey
 			}
+		}
+		if debugFlags.Tone {
+			toneID = 0
 		}
 		if 0 <= toneID {
 			q.port.SendKeyOn(chTo, note+enums.Note(cs.OctaveShift*12), delta, int(math.Floor(.5+31.0*vol)), toneID)
@@ -290,7 +319,11 @@ func (q *Sequencer) processEvent(sequence *chunk.ScoreTrackSequenceDataChunk, ga
 		}
 
 	case *event.OctaveShiftEvent:
-		cs.OctaveShift = evt.Value
+		if debugFlags.Octave {
+			cs.OctaveShift = 0
+		} else {
+			cs.OctaveShift = evt.Value
+		}
 
 	case *event.ExclusiveEvent:
 		// @todo process ExclusiveEvent
@@ -314,9 +347,13 @@ func (q *Sequencer) sendCC(sequence *chunk.ScoreTrackSequenceDataChunk, evt *eve
 			q.port.SendVibrato(chTo, scale127(evt.Value, 7, 1.0))
 		}
 	case enums.CC_MainVolume:
-		cs.Volume = evt.Value
+		vol := evt.Value
+		if debugFlags.Volume {
+			vol = 127
+		}
+		cs.Volume = vol
 		for _, chTo := range chsTo {
-			q.port.SendVolume(chTo, scale127(evt.Value, 31, 1.0), true)
+			q.port.SendVolume(chTo, scale127(vol, 31, 1.0), true)
 		}
 	case enums.CC_Panpot:
 		cs.Panpot = evt.Value

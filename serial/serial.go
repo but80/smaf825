@@ -289,6 +289,8 @@ func (sp *SerialPort) SendTones(data []*voice.VM35FMVoice) {
 	//   The tone parameters are set by the number of tones set to the Header. The parameter consists of 30 bytes of data for one tone.
 	//   The data are transferred and assigned to the Tone parameter memory from Tone 0 in the order they are written;
 	//   therefore, parameters of an intermediate Tone number cannot be written first. For details of the tone parameters, see "Tone Parameter"(fbd_spec3.md).
+
+	log.Debugf("sending %d tones", len(data))
 	b := []byte{0x80 + byte(len(data))}
 	for _, voice := range data {
 		b = append(b, voice.Bytes(true, true)...)

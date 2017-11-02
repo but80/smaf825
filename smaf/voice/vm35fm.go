@@ -314,3 +314,27 @@ func (v *VM35FMVoice) String() string {
 	s = append(s, "Raw="+util.Hex(v.Bytes(false, false)))
 	return strings.Join(s, "\n")
 }
+
+func NewDemoVM35FMVoice() *VM35FMVoice {
+	v := &VM35FMVoice{
+		Version:   VM35FMVoiceVersion_VM5,
+		DrumKey:   enums.Note_A3,
+		PANPOT:    enums.Panpot_Center,
+		BO:        enums.BasicOctave_Normal,
+		ALG:       enums.Algorithm(0),
+		Operators: [4]*VM35FMOperator{},
+	}
+	for i := 0; i < 4; i++ {
+		v.Operators[i] = &VM35FMOperator{}
+	}
+	op1 := &VM35FMOperator{
+		MULTI: 1,
+		AR:    14,
+		DR:    2,
+		SR:    8,
+		SL:    8,
+		RR:    8,
+	}
+	v.Operators[1] = op1
+	return v
+}

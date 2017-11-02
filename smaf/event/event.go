@@ -201,7 +201,11 @@ func CreateEventSEQU(rdr io.Reader, rest *int, ctx *sequenceBuilderContext) (Eve
 				return nil, errors.WithStack(err)
 			}
 			*rest--
-			return &OctaveShiftEvent{Channel: ch, Value: int(value)}, nil
+			v := int(value)
+			if 0x80 <= v {
+				v = 0x80 - v
+			}
+			return &OctaveShiftEvent{Channel: ch, Value: v}, nil
 		} else if msg == 0x33 {
 			var value uint8
 			err := binary.Read(rdr, binary.BigEndian, &value)

@@ -24,6 +24,7 @@ type ScoreTrackSequenceDataChunk struct {
 	UsedNoteCount     map[enums.Channel]int                `json:"-"`
 	NoteToChannel     map[enums.Channel]map[enums.Note]int `json:"-"`
 	ChannelToChannels map[enums.Channel][]int              `json:"-"`
+	UsedPC            map[uint32]bool                      `json:"-"`
 	IgnoredPC         map[uint32]bool                      `json:"-"`
 }
 
@@ -100,6 +101,7 @@ func (c *ScoreTrackSequenceDataChunk) Read(rdr io.Reader) error {
 func (c *ScoreTrackSequenceDataChunk) AggregateUsage(channelsToSplit []enums.Channel) {
 	c.IsChannelUsed = map[enums.Channel]bool{}
 	usedNotes := map[enums.Channel]map[enums.Note]bool{}
+	c.UsedPC = map[uint32]bool{}
 	pc := map[enums.Channel]uint32{}
 	for _, e := range c.Events {
 		ch := e.Event.GetChannel()
@@ -112,7 +114,6 @@ func (c *ScoreTrackSequenceDataChunk) AggregateUsage(channelsToSplit []enums.Cha
 				pc[ch] = pc[ch]&0xFF00FFFF | uint32(evt.Value)<<16
 			}
 		case *event.ProgramChangeEvent:
-			// @todo multiple PC in one channel
 			pc[ch] = pc[ch]&0xFFFF00FF | uint32(evt.PC)<<8
 		case *event.NoteEvent:
 			c.IsChannelUsed[ch] = true
@@ -120,6 +121,7 @@ func (c *ScoreTrackSequenceDataChunk) AggregateUsage(channelsToSplit []enums.Cha
 				usedNotes[ch] = map[enums.Note]bool{}
 			}
 			usedNotes[ch][evt.Note] = true
+			c.UsedPC[pc[ch]] = true
 		}
 	}
 	// @todo Check available channel count
@@ -174,7 +176,8 @@ func (c *ScoreTrackSequenceDataChunk) AggregateUsage(channelsToSplit []enums.Cha
 }
 
 func (c *ScoreTrackSequenceDataChunk) IsIgnoredPC(bankMSB, bankLSB, PC int, drumNote enums.Note) bool {
-	return c.IgnoredPC[uint32(bankMSB)<<24|uint32(bankLSB)<<16|uint32(PC)<<8|uint32(drumNote)]
+	pc := uint32(bankMSB)<<24 | uint32(bankLSB)<<16 | uint32(PC)<<8
+	return c.UsedPC[pc] && c.IgnoredPC[pc|uint32(drumNote)]
 }
 
 func (c *ScoreTrackSequenceDataChunk) ChannelTo(orgCh enums.Channel, note enums.Note) int {

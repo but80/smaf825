@@ -87,7 +87,7 @@ func (cs *ChannelState) Print(num int) {
 		}
 	}
 	fmt.Printf(
-		"%2d %3d-%-3d %3d %-4s %5d %3d %3d %3d %-3s %-4s\n",
+		"%2d %3d-%-3d %3d %-8s %5d %3d %3d %3d %-3s %-4s\n",
 		num+1,
 		cs.BankMSB,
 		cs.BankLSB,
@@ -186,7 +186,7 @@ func (ss *SequencerState) HasRest() bool {
 func (ss *SequencerState) Print() {
 	fmt.Print(cursor.ClearEntireScreen())
 	fmt.Print(cursor.MoveTo(0, 0))
-	fmt.Println("Ch Bank     PC Note  Bend Mod Vol Exp Pan Mono")
+	fmt.Println("Ch Bank     PC Note      Bend Mod Vol Exp Pan Mono")
 	for i, cs := range ss.Channels {
 		cs.Print(i)
 	}

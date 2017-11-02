@@ -198,12 +198,13 @@ func init() {
 	State.Tones = []*voice.VM35VoicePC{}
 	for i := 0; i < 16; i++ {
 		State.Channels[i] = &ChannelState{
-			GateTimeRest:   map[enums.Note]int{},
-			ToneID:         0,
-			Panpot:         64,
-			Volume:         100,
-			Expression:     127,
-			PitchBendRange: 2,
+			KeyControlStatus: enums.KeyControlStatus_On,
+			GateTimeRest:     map[enums.Note]int{},
+			ToneID:           0,
+			Panpot:           64,
+			Volume:           100,
+			Expression:       127,
+			PitchBendRange:   2,
 		}
 	}
 }

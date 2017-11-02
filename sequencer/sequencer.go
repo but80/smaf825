@@ -63,7 +63,7 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, opts *SequencerOptions) error {
 	var data *chunk.DataChunk
 	var setup chunk.ExclusiveContainer
 	var score *chunk.ScoreTrackChunk
-	var sequence *chunk.ScoreTrackSequenceDataChunk
+	sequences := []*chunk.ScoreTrackSequenceDataChunk{}
 	mmf.Traverse(func(c chunk.Chunk) {
 		switch ck := c.(type) {
 		case *chunk.ContentsInfoChunk:
@@ -79,14 +79,14 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, opts *SequencerOptions) error {
 		case *chunk.ScoreTrackChunk:
 			score = ck
 		case *chunk.ScoreTrackSequenceDataChunk:
-			sequence = ck
+			sequences = append(sequences, ck)
 		}
 	})
 	switch setup.(type) {
 	case nil:
 		return fmt.Errorf("Score track setup chunk not found")
 	}
-	if sequence == nil {
+	if len(sequences) == 0 {
 		return fmt.Errorf("Sequence data chunk not found")
 	}
 	//
@@ -115,8 +115,15 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, opts *SequencerOptions) error {
 	//
 	channelsToSplit := []enums.Channel{}
 	if score != nil {
+		allOff := true
+		for _, st := range score.ChannelStatus {
+			if st.KeyControlStatus != enums.KeyControlStatus_Off {
+				allOff = false
+				break
+			}
+		}
 		for ch, st := range score.ChannelStatus {
-			if debugFlags.KeyControl {
+			if allOff || debugFlags.KeyControl {
 				st.KeyControlStatus = enums.KeyControlStatus_On
 			}
 			State.Channels[ch].KeyControlStatus = st.KeyControlStatus
@@ -125,6 +132,7 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, opts *SequencerOptions) error {
 			}
 		}
 	}
+	sequence := chunk.MergeSequenceDataChunks(sequences)
 	sequence.AggregateUsage(channelsToSplit)
 	//
 	log.Debugf("collecting voices")

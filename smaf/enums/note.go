@@ -3,6 +3,8 @@ package enums
 import (
 	"fmt"
 	"math"
+
+	"github.com/but80/smaf825/smaf/log"
 )
 
 type Note int
@@ -39,27 +41,9 @@ type NoteFreq struct {
 	Block, Fnum int
 }
 
-var freqTable [128]NoteFreq
-
 const (
 	Note_A3 = 9 + 12*3
 )
-
-func init() {
-	for n := Note(0); n < 128; n++ {
-		f := 440 * math.Pow(2.0, float64(n-Note_A3)/12.0)
-		block := int(n) / 12
-		if block < 0 {
-			block = 0
-		} else if 7 < block {
-			block = 7
-		}
-		freqTable[n] = NoteFreq{
-			Block: block,
-			Fnum:  int(math.Floor(.5 + f*fnumK/math.Pow(2.0, float64(block)))),
-		}
-	}
-}
 
 func (n Note) String() string {
 	return fmt.Sprintf("%s(%d)", n.Name(), int(n))
@@ -73,7 +57,6 @@ func (n Note) Name() string {
 var fnumK = math.Pow(2.0, 19.0) / 48000.0 / 2.0
 
 func (n Note) Freq(delta float64) NoteFreq {
-	//return freqTable[n]
 	f := 440 * math.Pow(2.0, (float64(n-Note_A3)+delta)/12.0)
 	block := int(n) / 12
 	if block < 0 {
@@ -81,8 +64,28 @@ func (n Note) Freq(delta float64) NoteFreq {
 	} else if 7 < block {
 		block = 7
 	}
+	fnum := 0
+	for {
+		fnum = int(math.Floor(.5 + f*fnumK/math.Pow(2.0, float64(block))))
+		if fnum < 0 {
+			if 0 < block {
+				block--
+				continue
+			}
+			log.Warnf("Too low fnum: %s", n)
+			fnum = 0
+		} else if 1024 <= fnum {
+			if block < 7 {
+				block++
+				continue
+			}
+			log.Warnf("Too high fnum: %s", n)
+			fnum = 1023
+		}
+		break
+	}
 	return NoteFreq{
 		Block: block,
-		Fnum:  int(math.Floor(.5 + f*fnumK/math.Pow(2.0, float64(block)))),
+		Fnum:  fnum,
 	}
 }

@@ -7,6 +7,8 @@ import (
 
 	"encoding/binary"
 
+	"sort"
+
 	"github.com/but80/smaf825/smaf/enums"
 	"github.com/but80/smaf825/smaf/event"
 	"github.com/but80/smaf825/smaf/huffman"
@@ -14,6 +16,81 @@ import (
 	"github.com/but80/smaf825/smaf/util"
 	"github.com/pkg/errors"
 )
+
+type eventCandidate struct {
+	*event.DurationEventPair
+	index int
+}
+
+type eventCandidates []eventCandidate
+
+func (p eventCandidates) Len() int {
+	return len(p)
+}
+
+func (p eventCandidates) Less(i, j int) bool {
+	if p[i].Duration == p[j].Duration {
+		return p[i].index < p[j].index
+	} else {
+		return p[i].Duration < p[j].Duration
+	}
+}
+
+func (p eventCandidates) Swap(i, j int) {
+	p[i], p[j] = p[j], p[i]
+}
+
+func MergeSequenceDataChunks(chunks []*ScoreTrackSequenceDataChunk) *ScoreTrackSequenceDataChunk {
+	if len(chunks) == 1 {
+		return chunks[0]
+	}
+	log.Debugf("merging %d sequence data chunks", len(chunks))
+	for i, c := range chunks {
+		for _, e := range c.Events {
+			e.Event.ShiftChannel(i * 4)
+		}
+	}
+	result := &ScoreTrackSequenceDataChunk{
+		ChunkHeader: &ChunkHeader{
+			Signature: chunks[0].ChunkHeader.Signature,
+		},
+		FormatType: chunks[0].FormatType,
+		Events:     []event.DurationEventPair{},
+	}
+	if len(chunks) == 0 {
+		return result
+	}
+	e := make([]int, len(chunks))
+	for {
+		candidates := eventCandidates{}
+		for i, c := range chunks {
+			if e[i] < len(c.Events) {
+				candidates = append(candidates, eventCandidate{
+					DurationEventPair: &c.Events[e[i]],
+					index:             i,
+				})
+			}
+		}
+		if len(candidates) == 0 {
+			break
+		}
+		sort.Sort(candidates)
+		dur := candidates[0].Duration
+		log.Debugf("dur %d", dur)
+		for i, candidate := range candidates {
+			if candidate.Duration == dur {
+				if 0 < i {
+					candidate.Duration = 0
+				}
+				result.Events = append(result.Events, *candidate.DurationEventPair)
+				e[candidate.index]++
+			} else {
+				candidate.Duration -= dur
+			}
+		}
+	}
+	return result
+}
 
 type ScoreTrackSequenceDataChunk struct {
 	*ChunkHeader      `json:"chunk_header"`

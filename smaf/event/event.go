@@ -31,6 +31,7 @@ func (ctx *sequenceBuilderContext) reset() {
 type Event interface {
 	fmt.Stringer
 	GetChannel() enums.Channel
+	ShiftChannel(n int)
 }
 
 type NoteEvent struct {
@@ -42,6 +43,9 @@ type NoteEvent struct {
 
 func (e *NoteEvent) GetChannel() enums.Channel {
 	return e.Channel
+}
+func (e *NoteEvent) ShiftChannel(n int) {
+	e.Channel += enums.Channel(n)
 }
 
 func (e *NoteEvent) String() string {
@@ -57,6 +61,9 @@ type ControlChangeEvent struct {
 func (e *ControlChangeEvent) GetChannel() enums.Channel {
 	return e.Channel
 }
+func (e *ControlChangeEvent) ShiftChannel(n int) {
+	e.Channel += enums.Channel(n)
+}
 
 func (e *ControlChangeEvent) String() string {
 	return fmt.Sprintf("Tr.%02d CC %s Value=%d", e.Channel, e.CC.String(), e.Value)
@@ -69,6 +76,9 @@ type ProgramChangeEvent struct {
 
 func (e *ProgramChangeEvent) GetChannel() enums.Channel {
 	return e.Channel
+}
+func (e *ProgramChangeEvent) ShiftChannel(n int) {
+	e.Channel += enums.Channel(n)
 }
 
 func (e *ProgramChangeEvent) String() string {
@@ -83,6 +93,9 @@ type PitchBendEvent struct {
 func (e *PitchBendEvent) GetChannel() enums.Channel {
 	return e.Channel
 }
+func (e *PitchBendEvent) ShiftChannel(n int) {
+	e.Channel += enums.Channel(n)
+}
 
 func (e *PitchBendEvent) String() string {
 	return fmt.Sprintf("Tr.%02d PitchBend %d", e.Channel, e.Value)
@@ -95,6 +108,9 @@ type OctaveShiftEvent struct {
 
 func (e *OctaveShiftEvent) GetChannel() enums.Channel {
 	return e.Channel
+}
+func (e *OctaveShiftEvent) ShiftChannel(n int) {
+	e.Channel += enums.Channel(n)
 }
 
 func (e *OctaveShiftEvent) String() string {
@@ -109,6 +125,9 @@ type FineTuneEvent struct {
 func (e *FineTuneEvent) GetChannel() enums.Channel {
 	return e.Channel
 }
+func (e *FineTuneEvent) ShiftChannel(n int) {
+	e.Channel += enums.Channel(n)
+}
 
 func (e *FineTuneEvent) String() string {
 	return fmt.Sprintf("Tr.%02d Fine %d", e.Channel, e.Value)
@@ -121,6 +140,8 @@ type ExclusiveEvent struct {
 func (e *ExclusiveEvent) GetChannel() enums.Channel {
 	return 0
 }
+func (e *ExclusiveEvent) ShiftChannel(n int) {
+}
 
 func (e *ExclusiveEvent) String() string {
 	return fmt.Sprintf("Tr.-- %s", e.Exclusive.String())
@@ -131,6 +152,8 @@ type NopEvent struct {
 
 func (e *NopEvent) GetChannel() enums.Channel {
 	return 0
+}
+func (e *NopEvent) ShiftChannel(n int) {
 }
 
 func (e *NopEvent) String() string {

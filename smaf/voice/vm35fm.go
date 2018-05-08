@@ -9,8 +9,7 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/but80/smaf825/pb"
-
+	pb "github.com/but80/smaf825/pb/smaf"
 	"github.com/but80/smaf825/smaf/enums"
 	"github.com/but80/smaf825/smaf/log"
 	"github.com/but80/smaf825/smaf/util"

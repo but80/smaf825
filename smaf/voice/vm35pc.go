@@ -6,7 +6,7 @@ import (
 	"io"
 	"unsafe"
 
-	"github.com/but80/smaf825/pb"
+	pb "github.com/but80/smaf825/pb/smaf"
 	"github.com/but80/smaf825/smaf/enums"
 	"github.com/but80/smaf825/smaf/util"
 	"github.com/pkg/errors"

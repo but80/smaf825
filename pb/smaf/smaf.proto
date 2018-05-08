@@ -1,5 +1,5 @@
 syntax = "proto3";
-package pb;
+package smaf;
 
 message VM5VoiceLib {
 	repeated VM35VoicePC programs = 1;

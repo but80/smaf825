@@ -1,0 +1,24 @@
+run:
+  summary: 'Run program'
+  command: |
+    go run main.go $*
+
+test:
+  summary: 'Run test'
+  command: |
+    go test ./...
+
+lint:
+  summary: 'Check coding style'
+  command: |
+    gometalinter --config=.gometalinter.json ./...
+
+gen:
+  summary: 'Generate code'
+  command: |
+    protoc -I=pb/smaf --go_out=pb/smaf --cpp_out=extra/cpp pb/smaf/smaf.proto
+
+fmt:
+  summary: 'Format code'
+  command: |
+    find . -not \( \( -name vendor -or -name pb \) -prune \) -name '*.go' | xargs -I{} goimports -w {}

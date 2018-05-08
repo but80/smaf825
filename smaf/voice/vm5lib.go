@@ -7,7 +7,7 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/but80/smaf825/pb"
+	pb "github.com/but80/smaf825/pb/smaf"
 	"github.com/pkg/errors"
 )
 

@@ -5,6 +5,8 @@ import (
 	"io"
 	"unsafe"
 
+	"github.com/but80/smaf825/pb"
+
 	"github.com/but80/smaf825/smaf/util"
 	"github.com/pkg/errors"
 )
@@ -32,6 +34,12 @@ import (
 
 type VM35PCMVoice struct {
 	RawData [19]byte `json:"raw_data"`
+}
+
+func (v *VM35PCMVoice) ToPB() *pb.VM35PCMVoice {
+	return &pb.VM35PCMVoice{
+		RawData: v.RawData[:],
+	}
 }
 
 func (v *VM35PCMVoice) Read(rdr io.Reader, rest *int) error {

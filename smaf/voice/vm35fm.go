@@ -9,6 +9,8 @@ import (
 	"strings"
 	"unsafe"
 
+	"github.com/but80/smaf825/pb"
+
 	"github.com/but80/smaf825/smaf/enums"
 	"github.com/but80/smaf825/smaf/log"
 	"github.com/but80/smaf825/smaf/util"
@@ -44,6 +46,29 @@ type VM35FMOperator struct {
 	KSR     bool               `json:"ksr"`   // Key Scaling Rate
 	EAM     bool               `json:"eam"`   // Enable AM
 	EVB     bool               `json:"evb"`   // Enable Vibrato
+}
+
+func (op *VM35FMOperator) ToPB() *pb.VM35FMOperator {
+	return &pb.VM35FMOperator{
+		Multi: uint32(op.MULTI),
+		Dt:    uint32(op.DT),
+		Ar:    uint32(op.AR),
+		Dr:    uint32(op.DR),
+		Sr:    uint32(op.SR),
+		Rr:    uint32(op.RR),
+		Sl:    uint32(op.SL),
+		Tl:    uint32(op.TL),
+		Ksl:   uint32(op.KSL),
+		Dam:   uint32(op.DAM),
+		Dvb:   uint32(op.DVB),
+		Fb:    uint32(op.FB),
+		Ws:    uint32(op.WS),
+		Xof:   op.XOF,
+		Sus:   op.SUS,
+		Ksr:   op.KSR,
+		Eam:   op.EAM,
+		Evb:   op.EVB,
+	}
 }
 
 func (op *VM35FMOperator) Read(rdr io.Reader, rest *int) error {
@@ -159,6 +184,22 @@ func NewVM35FMVoice(data []byte, version VM35FMVoiceVersion) (*VM35FMVoice, erro
 		return nil, fmt.Errorf("Wrong size of VM3/VM5 voice data (want %d, got %d bytes): %s", len(data)-rest, len(data), util.Hex(data))
 	}
 	return voice, nil
+}
+
+func (v *VM35FMVoice) ToPB() *pb.VM35FMVoice {
+	result := &pb.VM35FMVoice{
+		DrumKey:   uint32(v.DrumKey),
+		Panpot:    uint32(v.PANPOT),
+		Bo:        uint32(v.BO),
+		Lfo:       uint32(v.LFO),
+		Pe:        v.PE,
+		Alg:       uint32(v.ALG),
+		Operators: make([]*pb.VM35FMOperator, 4),
+	}
+	for i, op := range v.Operators {
+		result.Operators[i] = op.ToPB()
+	}
+	return result
 }
 
 func (v *VM35FMVoice) Read(rdr io.Reader, rest *int) error {

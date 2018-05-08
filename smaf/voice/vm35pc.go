@@ -6,6 +6,7 @@ import (
 	"io"
 	"unsafe"
 
+	"github.com/but80/smaf825/pb"
 	"github.com/but80/smaf825/smaf/enums"
 	"github.com/but80/smaf825/smaf/util"
 	"github.com/pkg/errors"
@@ -50,6 +51,25 @@ type vm5VoicePCHeaderRawData struct {
 	PC        uint8
 	DrumNote  uint8
 	VoiceType uint8 // bit0: 0=Type=FM 1=Type=PCM
+}
+
+func (p *VM35VoicePC) ToPB() *pb.VM35VoicePC {
+	result := &pb.VM35VoicePC{
+		Version:   pb.VM35FMVoiceVersion(p.Version),
+		Name:      p.Name,
+		BankMsb:   uint32(p.BankMSB),
+		BankLsb:   uint32(p.BankLSB),
+		Pc:        uint32(p.PC),
+		DrumNote:  uint32(p.DrumNote),
+		VoiceType: pb.VoiceType(p.VoiceType),
+	}
+	switch v := p.Voice.(type) {
+	case *VM35FMVoice:
+		result.FmVoice = v.ToPB()
+	case *VM35PCMVoice:
+		result.PcmVoice = v.ToPB()
+	}
+	return result
 }
 
 func (p *VM35VoicePC) Read(rdr io.Reader, rest *int) error {

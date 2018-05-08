@@ -7,11 +7,22 @@ import (
 	"strings"
 	"unsafe"
 
+	"github.com/but80/smaf825/pb"
 	"github.com/pkg/errors"
 )
 
 type VM5VoiceLib struct {
 	Programs []*VM35VoicePC `json:"programs"`
+}
+
+func (lib *VM5VoiceLib) ToPB() *pb.VM5VoiceLib {
+	result := &pb.VM5VoiceLib{
+		Programs: make([]*pb.VM35VoicePC, len(lib.Programs)),
+	}
+	for i, pc := range lib.Programs {
+		result.Programs[i] = pc.ToPB()
+	}
+	return result
 }
 
 func (lib *VM5VoiceLib) Read(rdr io.Reader, rest *int) error {

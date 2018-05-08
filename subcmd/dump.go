@@ -9,6 +9,7 @@ import (
 	"github.com/but80/smaf825/smaf/chunk"
 	"github.com/but80/smaf825/smaf/log"
 	"github.com/but80/smaf825/smaf/voice"
+	"github.com/golang/protobuf/proto"
 	"github.com/urfave/cli"
 )
 
@@ -21,6 +22,10 @@ var Dump = cli.Command{
 		cli.BoolFlag{
 			Name:  "json, j",
 			Usage: `Dumps in JSON format`,
+		},
+		cli.BoolFlag{
+			Name:  "protobuf, p",
+			Usage: `Dumps in protobuf`,
 		},
 		cli.BoolFlag{
 			Name:  "voice, v",
@@ -97,6 +102,17 @@ var Dump = cli.Command{
 				return cli.NewExitError(err, 1)
 			}
 			fmt.Println(string(j))
+		} else if ctx.Bool("protobuf") {
+			switch d := data.(type) {
+			case *voice.VM5VoiceLib:
+				b, err := proto.Marshal(d.ToPB())
+				if err != nil {
+					return cli.NewExitError(err, 1)
+				}
+				fmt.Print(string(b))
+			default:
+				return cli.NewExitError(fmt.Errorf("Protobuf conversion for %s is not supported", ext), 1)
+			}
 		} else {
 			fmt.Println(data.String())
 		}

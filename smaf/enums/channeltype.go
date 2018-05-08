@@ -15,7 +15,7 @@ const (
 )
 
 func (t ChannelType) String() string {
-	s := "undefined"
+	var s string
 	switch t {
 	case ChannelType_NoCare:
 		s = "NoCare"
@@ -25,8 +25,10 @@ func (t ChannelType) String() string {
 		s = "NoMelody"
 	case ChannelType_Rhythm:
 		s = "Rhythm"
+	default:
+		s = fmt.Sprintf("undefined (0x%02X)", int(t))
 	}
-	return fmt.Sprintf("%s(0x%02X)", s, int(t))
+	return s
 }
 
 func (t ChannelType) MarshalJSON() ([]byte, error) {

@@ -14,7 +14,7 @@ const (
 )
 
 func (t VoiceType) String() string {
-	s := "unknown"
+	var s string
 	switch t {
 	case 0:
 		s = "FM"
@@ -22,8 +22,10 @@ func (t VoiceType) String() string {
 		s = "PCM"
 	case 2:
 		s = "AL"
+	default:
+		s = fmt.Sprintf("undefined (0x%02X)", int(t))
 	}
-	return fmt.Sprintf("%s(%d)", s, t)
+	return s
 }
 
 func (t VoiceType) MarshalJSON() ([]byte, error) {

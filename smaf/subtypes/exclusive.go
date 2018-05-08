@@ -2,10 +2,8 @@ package subtypes
 
 import (
 	"encoding/binary"
-	"io"
-
 	"fmt"
-
+	"io"
 	"strings"
 
 	"github.com/but80/smaf825/smaf/enums"

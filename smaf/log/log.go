@@ -3,7 +3,6 @@ package log
 import (
 	"fmt"
 	"os"
-
 	"strings"
 
 	"github.com/fatih/color"

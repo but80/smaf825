@@ -3,10 +3,9 @@ package huffman
 // 参考 http://oku.edu.mie-u.ac.jp/~okumura/algo/
 
 import (
+	"encoding/binary"
 	"fmt"
 	"io"
-
-	"encoding/binary"
 
 	"github.com/pkg/errors"
 	//"github.com/but80/smaf825/smaf/log"

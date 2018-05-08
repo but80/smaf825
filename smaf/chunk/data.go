@@ -1,9 +1,8 @@
 package chunk
 
 import (
-	"io"
-
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/but80/smaf825/smaf/util"

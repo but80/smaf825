@@ -2,11 +2,10 @@ package chunk
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"io"
 	"unsafe"
-
-	"encoding/json"
 
 	"github.com/but80/smaf825/smaf/enums"
 	"github.com/but80/smaf825/smaf/log"
@@ -21,7 +20,7 @@ func (s Signature) String() string {
 }
 
 func (s Signature) MarshalJSON() ([]byte, error) {
-	return json.Marshal(s.String())
+	return json.Marshal(fmt.Sprintf("%c%c%c%c", s>>24, s>>16&255, s>>8&255, s&255))
 }
 
 type ExclusiveContainer interface {

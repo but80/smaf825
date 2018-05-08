@@ -15,14 +15,16 @@ const (
 )
 
 func (t ScoreTrackSequenceType) String() string {
-	s := "undefined"
+	var s string
 	switch t {
 	case ScoreTrackSequenceType_StreamSequence:
 		s = "StreamSequence"
 	case ScoreTrackSequenceType_Subsequence:
 		s = "Subsequence"
+	default:
+		s = fmt.Sprintf("undefined (0x%02X)", int(t))
 	}
-	return fmt.Sprintf("%s(0x%02X)", s, int(t))
+	return s
 }
 
 func (t ScoreTrackSequenceType) MarshalJSON() ([]byte, error) {

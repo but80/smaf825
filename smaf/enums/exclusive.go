@@ -14,14 +14,16 @@ const (
 )
 
 func (t ExclusiveType) String() string {
-	s := "Unknown"
+	var s string
 	switch t {
 	case ExclusiveType_VMAVoice:
 		s = "VMAVoice"
 	case ExclusiveType_VM35Voice:
-		s = "VM3/VM5Voice"
+		s = "VM35Voice"
+	default:
+		s = fmt.Sprintf("undefined (0x%02X)", int(t))
 	}
-	return fmt.Sprintf("%s(0x%02X)", s, int(t))
+	return s
 }
 
 func (t ExclusiveType) MarshalJSON() ([]byte, error) {

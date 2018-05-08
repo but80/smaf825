@@ -1,7 +1,6 @@
 package event
 
 import (
-	//"fmt"
 	"encoding/binary"
 	"fmt"
 	"io"

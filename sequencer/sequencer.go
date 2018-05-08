@@ -1,13 +1,10 @@
 package sequencer
 
 import (
-	"time"
-
 	"fmt"
-
 	"math"
-
 	"strings"
+	"time"
 
 	"github.com/but80/smaf825/serial"
 	"github.com/but80/smaf825/smaf/chunk"

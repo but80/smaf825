@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-
 	"strings"
 
 	"github.com/but80/smaf825/smaf/chunk"

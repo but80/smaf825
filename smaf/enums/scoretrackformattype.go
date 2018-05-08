@@ -24,7 +24,7 @@ func (t ScoreTrackFormatType) IsSupported() bool {
 }
 
 func (t ScoreTrackFormatType) String() string {
-	s := "undefined"
+	var s string
 	switch t {
 	case ScoreTrackFormatType_HandyPhoneStandard:
 		s = "HandyPhoneStandard"
@@ -32,8 +32,10 @@ func (t ScoreTrackFormatType) String() string {
 		s = "MobileStandardCompressed"
 	case ScoreTrackFormatType_MobileStandardNonCompressed:
 		s = "MobileStandardNonCompressed"
+	default:
+		s = fmt.Sprintf("undefined (0x%02X)", int(t))
 	}
-	return fmt.Sprintf("%s(0x%02X)", s, int(t))
+	return s
 }
 
 func (t ScoreTrackFormatType) MarshalJSON() ([]byte, error) {

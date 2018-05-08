@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"strings"
-
 	"unsafe"
 
 	"github.com/but80/smaf825/smaf/enums"

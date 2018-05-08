@@ -3,7 +3,6 @@ package chunk
 import (
 	"io"
 	"strings"
-
 	"unsafe"
 
 	"github.com/but80/smaf825/smaf/enums"

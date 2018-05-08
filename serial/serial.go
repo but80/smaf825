@@ -1,18 +1,14 @@
 package serial
 
 import (
-	"math"
-
 	"bufio"
-	"io"
-
 	"fmt"
-	"strings"
-
+	"io"
+	"math"
 	"strconv"
-	"time"
-
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/but80/smaf825/smaf/enums"
 	"github.com/but80/smaf825/smaf/log"

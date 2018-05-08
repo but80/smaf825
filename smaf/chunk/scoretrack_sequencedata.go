@@ -1,13 +1,11 @@
 package chunk
 
 import (
+	"encoding/binary"
 	"fmt"
 	"io"
-	"strings"
-
-	"encoding/binary"
-
 	"sort"
+	"strings"
 
 	"github.com/but80/smaf825/smaf/enums"
 	"github.com/but80/smaf825/smaf/event"

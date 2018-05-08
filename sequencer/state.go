@@ -2,7 +2,6 @@ package sequencer
 
 import (
 	"fmt"
-
 	"sort"
 
 	"github.com/ahmetalpbalkan/go-cursor"

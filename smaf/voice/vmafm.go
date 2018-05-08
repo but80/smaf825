@@ -1,15 +1,13 @@
 package voice
 
 import (
+	"bytes"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
 	"unsafe"
-
-	"bytes"
-
-	"encoding/json"
 
 	"github.com/but80/smaf825/smaf/enums"
 	"github.com/but80/smaf825/smaf/util"

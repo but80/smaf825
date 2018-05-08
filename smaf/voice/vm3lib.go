@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"strings"
-
 	"unsafe"
 
 	"github.com/pkg/errors"

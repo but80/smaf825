@@ -1,12 +1,10 @@
 package chunk
 
 import (
-	"io"
-
-	"fmt"
-	"strings"
-
 	"bytes"
+	"fmt"
+	"io"
+	"strings"
 
 	"github.com/but80/smaf825/smaf/subtypes"
 	"github.com/but80/smaf825/smaf/util"

@@ -75,6 +75,13 @@ SMF825用に変換されたデータ列は、JSON形式の出力中の `.voices[
 smaf825 dump -Q -v -j music.mmf | jq -crM '.voices[].ymf825_data'
 ```
 
+ボイスライブラリ `*.vma` `*.vm3` `*.vm5` からも抽出できますが、PCM・AL音源ボイスなどが含まれていると正常に処理できません。
+ATS-MA5等で特定の1バンク＝PC128個分のみをエクスポートした部分ライブラリごとに読み込むと安全です（特定LSBの見出しのコンテキストメニューを開くことで行なえます）。
+
+この際、音色の種類がすべて `F2` `F4` のいずれかになっていることを確認してください。`P` 等の音色が含まれている場合は、他の `F2` `F4` 音色で上書き削除した上でエクスポートする必要があります。
+
+`-j` の代わりに `-p` オプションを付けることで、Protocol Buffer形式での出力ができます。[fmFM](https://github.com/but80/fmfm) では、音色ライブラリをこの形式で読み込む必要があります。
+
 ## 参考情報
 
 - [YMF825Board GitHubPage](https://yamaha-webmusic.github.io/ymf825board/intro/)

@@ -278,13 +278,15 @@ void AddDescriptorsImpl() {
       "am\030\n \001(\r\022\013\n\003dvb\030\013 \001(\r\022\n\n\002fb\030\014 \001(\r\022\n\n\002ws\030"
       "\r \001(\r\022\013\n\003xof\030\016 \001(\010\022\013\n\003sus\030\017 \001(\010\022\013\n\003ksr\030\020"
       " \001(\010\022\013\n\003eam\030\021 \001(\010\022\013\n\003evb\030\022 \001(\010\" \n\014VM35PC"
-      "MVoice\022\020\n\010raw_data\030\001 \001(\014*;\n\022VM35FMVoiceV"
-      "ersion\022\n\n\006VM3LIB\020\000\022\020\n\014VM3EXCLUSIVE\020\001\022\007\n\003"
-      "VM5\020\002*$\n\tVoiceType\022\006\n\002FM\020\000\022\007\n\003PCM\020\001\022\006\n\002A"
-      "L\020\002b\006proto3"
+      "MVoice\022\020\n\010raw_data\030\001 \001(\014*w\n\022VM35FMVoiceV"
+      "ersion\022\032\n\026VM35FMVoiceVersion_MIN\020\000\022\n\n\006VM"
+      "3LIB\020\000\022\020\n\014VM3EXCLUSIVE\020\001\022\007\n\003VM5\020\002\022\032\n\026VM3"
+      "5FMVoiceVersion_MAX\020\002\032\002\020\001*N\n\tVoiceType\022\021"
+      "\n\rVoiceType_MIN\020\000\022\006\n\002FM\020\000\022\007\n\003PCM\020\001\022\006\n\002AL"
+      "\020\002\022\021\n\rVoiceType_MAX\020\002\032\002\020\001b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 851);
+      descriptor, 953);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "smaf.proto", &protobuf_RegisterTypes);
 }

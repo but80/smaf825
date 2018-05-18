@@ -81,14 +81,16 @@ extern VM5VoiceLibDefaultTypeInternal _VM5VoiceLib_default_instance_;
 namespace smaf {
 
 enum VM35FMVoiceVersion {
+  VM35FMVoiceVersion_MIN = 0,
   VM3LIB = 0,
   VM3EXCLUSIVE = 1,
   VM5 = 2,
+  VM35FMVoiceVersion_MAX = 2,
   VM35FMVoiceVersion_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
   VM35FMVoiceVersion_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
 };
 bool VM35FMVoiceVersion_IsValid(int value);
-const VM35FMVoiceVersion VM35FMVoiceVersion_MIN = VM3LIB;
+const VM35FMVoiceVersion VM35FMVoiceVersion_MIN = VM35FMVoiceVersion_MIN;
 const VM35FMVoiceVersion VM35FMVoiceVersion_MAX = VM5;
 const int VM35FMVoiceVersion_ARRAYSIZE = VM35FMVoiceVersion_MAX + 1;
 
@@ -103,14 +105,16 @@ inline bool VM35FMVoiceVersion_Parse(
     VM35FMVoiceVersion_descriptor(), name, value);
 }
 enum VoiceType {
+  VoiceType_MIN = 0,
   FM = 0,
   PCM = 1,
   AL = 2,
+  VoiceType_MAX = 2,
   VoiceType_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
   VoiceType_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
 };
 bool VoiceType_IsValid(int value);
-const VoiceType VoiceType_MIN = FM;
+const VoiceType VoiceType_MIN = VoiceType_MIN;
 const VoiceType VoiceType_MAX = AL;
 const int VoiceType_ARRAYSIZE = VoiceType_MAX + 1;
 

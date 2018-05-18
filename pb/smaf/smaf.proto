@@ -18,15 +18,21 @@ message VM35VoicePC {
 }
 
 enum VM35FMVoiceVersion {
+  option allow_alias = true;
+  VM35FMVoiceVersion_MIN = 0;
 	VM3LIB       = 0;
 	VM3EXCLUSIVE = 1;
 	VM5          = 2;
+  VM35FMVoiceVersion_MAX = 2;
 }
 
 enum VoiceType {
-	FM  = 0;
-	PCM = 1;
-	AL  = 2;
+  option allow_alias = true;
+  VoiceType_MIN = 0;
+	FM   = 0;
+	PCM  = 1;
+  AL   = 2;
+  VoiceType_MAX = 2;
 }
 
 message VM35FMVoice {

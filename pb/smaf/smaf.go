@@ -97,6 +97,10 @@ func (voice *VM35FMVoice) Normalize() bool {
 		voice.Operators = append(voice.Operators, &VM35FMOperator{})
 		ok = false
 	}
+	if ops < len(voice.Operators) {
+		voice.Operators = voice.Operators[:ops]
+		ok = false
+	}
 	for i, op := range voice.Operators {
 		if op == nil {
 			op = &VM35FMOperator{}

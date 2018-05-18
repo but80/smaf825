@@ -7,7 +7,11 @@ func (lib *VM5VoiceLib) Normalize() []*VM35VoicePC {
 		lib.Programs = []*VM35VoicePC{}
 	}
 	result := []*VM35VoicePC{}
-	for _, pc := range lib.Programs {
+	for i, pc := range lib.Programs {
+		if pc == nil {
+			pc = &VM35VoicePC{}
+			lib.Programs[i] = pc
+		}
 		if !pc.Normalize() {
 			result = append(result, pc)
 		}
@@ -85,10 +89,6 @@ func (voice *VM35FMVoice) Normalize() bool {
 	normalizeUint32(&ok, &voice.Bo, 0, 3)
 	normalizeUint32(&ok, &voice.Lfo, 0, 3)
 	normalizeUint32(&ok, &voice.Alg, 0, 7)
-	if voice.Operators == nil {
-		voice.Operators = []*VM35FMOperator{{},{}}
-		ok = false
-	}
 	ops := 4
 	if voice.Alg < 2 {
 		ops = 2
@@ -97,7 +97,12 @@ func (voice *VM35FMVoice) Normalize() bool {
 		voice.Operators = append(voice.Operators, &VM35FMOperator{})
 		ok = false
 	}
-	for _, op := range voice.Operators {
+	for i, op := range voice.Operators {
+		if op == nil {
+			op = &VM35FMOperator{}
+			voice.Operators[i] = op
+			ok = false
+		}
 		if !op.Normalize() {
 			ok = false
 		}

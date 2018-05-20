@@ -1,5 +1,65 @@
 package smaf
 
+import (
+	"io/ioutil"
+
+	"github.com/golang/protobuf/proto"
+)
+
+// DefaultPC は、未定義の音色をロードしようとしたときに返されるデフォルト音色です。
+var DefaultPC = &VM35VoicePC{
+	Version:   VM35FMVoiceVersion_VM5,
+	Name:      "default",
+	VoiceType: VoiceType_FM,
+	FmVoice: &VM35FMVoice{
+		Panpot: 15,
+		Bo:     1,
+		Alg:    1,
+		Operators: []*VM35FMOperator{
+			{},
+			{},
+		},
+	},
+}
+
+// Get は、音色データを取得します。
+func (lib *VM5VoiceLib) Get(msb, lsb, pc, note int) (*VM35VoicePC, bool) {
+	if lib == nil {
+		return DefaultPC, false
+	}
+	for _, p := range lib.Programs {
+		if !(p.Pc == uint32(pc) && p.BankLsb == uint32(lsb) && p.BankMsb == uint32(msb)) {
+			continue
+		}
+		if p.DrumNote != 0 && int(p.DrumNote) != note {
+			continue
+		}
+		return p, true
+	}
+	return DefaultPC, false
+}
+
+// LoadFile は、ファイルから音色ライブラリをロードします。
+func (lib *VM5VoiceLib) LoadFile(file string) error {
+	b, err := ioutil.ReadFile("voice/" + file)
+	if err != nil {
+		return err
+	}
+	return lib.LoadBytes(b)
+}
+
+// LoadBytes は、バイト列から音色ライブラリをロードします。
+func (lib *VM5VoiceLib) LoadBytes(b []byte) error {
+	var loaded VM5VoiceLib
+	err := proto.Unmarshal(b, &loaded)
+	if err != nil {
+		return err
+	}
+	lib.Programs = append(lib.Programs, loaded.Programs...)
+	_ = lib.Normalize()
+	return nil
+}
+
 // Normalize は、音色データから異常な値を排除し、正常化します。
 // 異常が検出された音色の一覧を返します。
 func (lib *VM5VoiceLib) Normalize() []*VM35VoicePC {

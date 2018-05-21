@@ -6,9 +6,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/but80/smaf825/smaf/chunk"
-	"github.com/but80/smaf825/smaf/log"
-	"github.com/but80/smaf825/smaf/voice"
+	"github.com/but80/go-smaf/chunk"
+	"github.com/but80/go-smaf/log"
+	"github.com/but80/go-smaf/voice"
 	"github.com/golang/protobuf/proto"
 	"github.com/urfave/cli"
 )

@@ -3,10 +3,10 @@ package subcmd
 import (
 	"os"
 
+	"github.com/but80/go-smaf/chunk"
+	"github.com/but80/go-smaf/log"
 	"github.com/but80/smaf825/sequencer"
 	"github.com/but80/smaf825/serial"
-	"github.com/but80/smaf825/smaf/chunk"
-	"github.com/but80/smaf825/smaf/log"
 	"github.com/urfave/cli"
 )
 

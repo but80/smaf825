@@ -10,9 +10,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/but80/smaf825/smaf/enums"
-	"github.com/but80/smaf825/smaf/log"
-	"github.com/but80/smaf825/smaf/voice"
+	"github.com/but80/go-smaf/enums"
+	"github.com/but80/go-smaf/log"
+	"github.com/but80/go-smaf/voice"
 	"github.com/jacobsa/go-serial/serial"
 	"github.com/pkg/errors"
 	"github.com/xlab/closer"

@@ -6,15 +6,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/but80/go-smaf/chunk"
-	"github.com/but80/go-smaf/enums"
-	"github.com/but80/go-smaf/event"
-	"github.com/but80/go-smaf/log"
-	"github.com/but80/go-smaf/util"
-	"github.com/but80/go-smaf/voice"
 	"github.com/but80/smaf825/serial"
 	"github.com/pkg/errors"
 	"github.com/xlab/closer"
+	"gopkg.in/but80/go-smaf.v1/chunk"
+	"gopkg.in/but80/go-smaf.v1/enums"
+	"gopkg.in/but80/go-smaf.v1/event"
+	"gopkg.in/but80/go-smaf.v1/log"
+	"gopkg.in/but80/go-smaf.v1/util"
+	"gopkg.in/but80/go-smaf.v1/voice"
 )
 
 /*

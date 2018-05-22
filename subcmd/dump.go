@@ -6,11 +6,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/but80/go-smaf/chunk"
-	"github.com/but80/go-smaf/log"
-	"github.com/but80/go-smaf/voice"
 	"github.com/golang/protobuf/proto"
 	"github.com/urfave/cli"
+	"gopkg.in/but80/go-smaf.v1/chunk"
+	"gopkg.in/but80/go-smaf.v1/log"
+	"gopkg.in/but80/go-smaf.v1/voice"
 )
 
 var Dump = cli.Command{

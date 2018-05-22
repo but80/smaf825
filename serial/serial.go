@@ -10,12 +10,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/but80/go-smaf/enums"
-	"github.com/but80/go-smaf/log"
-	"github.com/but80/go-smaf/voice"
 	"github.com/jacobsa/go-serial/serial"
 	"github.com/pkg/errors"
 	"github.com/xlab/closer"
+	"gopkg.in/but80/go-smaf.v1/enums"
+	"gopkg.in/but80/go-smaf.v1/log"
+	"gopkg.in/but80/go-smaf.v1/voice"
 )
 
 const (

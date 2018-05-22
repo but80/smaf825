@@ -3,11 +3,11 @@ package subcmd
 import (
 	"os"
 
-	"github.com/but80/go-smaf/chunk"
-	"github.com/but80/go-smaf/log"
 	"github.com/but80/smaf825/sequencer"
 	"github.com/but80/smaf825/serial"
 	"github.com/urfave/cli"
+	"gopkg.in/but80/go-smaf.v1/chunk"
+	"gopkg.in/but80/go-smaf.v1/log"
 )
 
 var Play = cli.Command{

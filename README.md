@@ -98,4 +98,4 @@ ATS-MA5等で特定の1バンク＝PC128個分のみをエクスポートした�
 - 再生中に `Ctrl+C` で停止後、再度再生しようとすると応答がなくなる不具合が確認されています。
   このような場合、 `Ctrl+C` での停止後にArduinoを接続しているUSB端子をいったん抜き差ししてみてください。
 - 再生後に再度再生すると、音程がおかしくなる不具合が確認されています。こちらも同様にUSB端子を抜き差ししてみてください。
-- `Sketch version mismatch (…). Please rewrite "bridge/bridge.ino" onto Arduino.` と表示される場合は、ホスト側バイナリとArduino側スケッチのバージョンが一致していません。バイナリを最新版に更新し、スケッチを転送し直す必要があります。
+- `sketch version mismatch (…). please rewrite "bridge/bridge.ino" onto Arduino` と表示される場合は、ホスト側バイナリとArduino側スケッチのバージョンが一致していません。バイナリを最新版に更新し、スケッチを転送し直す必要があります。

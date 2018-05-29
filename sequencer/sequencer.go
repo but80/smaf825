@@ -30,31 +30,39 @@ $ hexdump -C < /dev/ttys007
 
 */
 
-type SequencerOptions struct {
-	Loop, Volume, Gain, SeqVol, BaudRate int
+// Options は、シーケンサのオプション設定です。
+type Options struct {
+	Loop     int
+	Volume   int
+	Gain     int
+	SeqVol   int
+	BaudRate int
 }
 
+// Sequencer は、シーケンサです。
 type Sequencer struct {
+	// DeviceName は、出力先シリアルポートのデバイス名です。
 	DeviceName string
-	ShowState  bool
-	port       *serial.SerialPort
+	// ShowState は、trueのときシーケンサの状態を画面表示します。
+	ShowState bool
+
+	controller *serial.Controller
 }
 
-type DebugFlags struct {
+var debugFlags = struct {
 	Tone       bool
 	Volume     bool
 	Octave     bool
 	KeyControl bool
-}
-
-var debugFlags = &DebugFlags{
+}{
 	Tone:       false,
 	Volume:     false,
 	Octave:     false,
 	KeyControl: false,
 }
 
-func (q *Sequencer) Play(mmf *chunk.FileChunk, opts *SequencerOptions) error {
+// Play は、シーケンサの演奏を開始します。
+func (q *Sequencer) Play(mmf *chunk.FileChunk, opts *Options) error {
 	var err error
 	var info *chunk.ContentsInfoChunk
 	var data *chunk.DataChunk
@@ -148,24 +156,24 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, opts *SequencerOptions) error {
 		}
 	}
 	//
-	if q.port == nil {
-		q.port, err = serial.NewSerialPort(q.DeviceName, opts.BaudRate)
+	if q.controller == nil {
+		q.controller, err = serial.NewSerialPort(q.DeviceName, opts.BaudRate)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 	}
-	q.port.SendMasterVolume(opts.Volume)
-	q.port.SendAnalogGain(opts.Gain)
-	q.port.SendSeqVol(opts.SeqVol)
+	q.controller.SendMasterVolume(opts.Volume)
+	q.controller.SendAnalogGain(opts.Gain)
+	q.controller.SendSeqVol(opts.SeqVol)
 	//
 	log.Debugf("sending voices")
-	q.port.SendAllOff() // トーン設定時は発音をすべて停止
+	q.controller.SendAllOff() // トーン設定時は発音をすべて停止
 	if debugFlags.Tone {
-		q.port.SendTones([]*voice.VM35FMVoice{
+		q.controller.SendTones([]*voice.VM35FMVoice{
 			voice.NewDemoVM35FMVoice(),
 		})
 	} else {
-		q.port.SendTones(State.ToneData())
+		q.controller.SendTones(State.ToneData())
 	}
 	//
 	var timeBase, durationTickCycle, gateTickCycle int
@@ -186,16 +194,16 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, opts *SequencerOptions) error {
 	stopped := false
 	closer.Bind(func() {
 		stopped = true
-		q.port.SendAllOff()
+		q.controller.SendAllOff()
 	})
 	go func() {
 		loop := opts.Loop
 		iEvent := 0
 		durationRest := 0
-		q.port.SendWait(1000)
+		q.controller.SendWait(1000)
 		var pendingEvent event.Event
 		for !stopped && (iEvent < len(sequence.Events) || State.HasRest()) {
-			q.port.SendWait(timeBase)
+			q.controller.SendWait(timeBase)
 			select {
 			case <-ticker.C:
 				keyOffFound := false
@@ -207,7 +215,7 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, opts *SequencerOptions) error {
 						if cs.KeyControlStatus == enums.KeyControlStatus_Off {
 							toneID = State.GetToneIDByPCAndDrumNote(cs.BankMSB, cs.BankLSB, cs.PC, note)
 						}
-						q.port.SendKeyOff(chTo, toneID)
+						q.controller.SendKeyOff(chTo, toneID)
 					}
 					keyOffFound = true
 				})
@@ -248,8 +256,8 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, opts *SequencerOptions) error {
 	}()
 	<-end
 	ticker.Stop()
-	q.port.SendAllOff()
-	for !q.port.Flush() {
+	q.controller.SendAllOff()
+	for !q.controller.Flush() {
 		time.Sleep(time.Millisecond)
 	}
 	return nil
@@ -300,7 +308,7 @@ func (q *Sequencer) processEvent(sequence *chunk.ScoreTrackSequenceDataChunk, ga
 			toneID = 0
 		}
 		if 0 <= toneID {
-			q.port.SendKeyOn(chTo, note+enums.Note(cs.OctaveShift*12), delta, int(math.Floor(.5+31.0*vol)), toneID)
+			q.controller.SendKeyOn(chTo, note+enums.Note(cs.OctaveShift*12), delta, int(math.Floor(.5+31.0*vol)), toneID)
 		}
 
 	case *event.PitchBendEvent:
@@ -308,7 +316,7 @@ func (q *Sequencer) processEvent(sequence *chunk.ScoreTrackSequenceDataChunk, ga
 		delta := float64(cs.PitchBend) * float64(cs.PitchBendRange) / 8192.0
 		for note := range cs.GateTimeRest {
 			chTo := sequence.ChannelTo(ch, note)
-			q.port.SendPitch(chTo, note, delta)
+			q.controller.SendPitch(chTo, note, delta)
 		}
 
 	case *event.ControlChangeEvent:
@@ -349,7 +357,7 @@ func (q *Sequencer) sendCC(sequence *chunk.ScoreTrackSequenceDataChunk, evt *eve
 	case enums.CC_Modulation:
 		cs.Modulation = evt.Value
 		for _, chTo := range chsTo {
-			q.port.SendVibrato(chTo, scale127(evt.Value, 7, 1.0))
+			q.controller.SendVibrato(chTo, scale127(evt.Value, 7, 1.0))
 		}
 	case enums.CC_MainVolume:
 		vol := evt.Value
@@ -358,7 +366,7 @@ func (q *Sequencer) sendCC(sequence *chunk.ScoreTrackSequenceDataChunk, evt *eve
 		}
 		cs.Volume = vol
 		for _, chTo := range chsTo {
-			q.port.SendVolume(chTo, scale127(vol, 31, 1.0), true)
+			q.controller.SendVolume(chTo, scale127(vol, 31, 1.0), true)
 		}
 	case enums.CC_Panpot:
 		cs.Panpot = evt.Value
@@ -382,7 +390,7 @@ func (q *Sequencer) sendCC(sequence *chunk.ScoreTrackSequenceDataChunk, evt *eve
 			if cs.KeyControlStatus == enums.KeyControlStatus_Off {
 				toneID = State.GetToneIDByPCAndDrumNote(cs.BankMSB, cs.BankLSB, cs.PC, note)
 			}
-			q.port.SendKeyOff(chTo, toneID)
+			q.controller.SendKeyOff(chTo, toneID)
 		}
 	case enums.CC_DataEntry:
 		switch cs.RPNMSB {
@@ -393,7 +401,7 @@ func (q *Sequencer) sendCC(sequence *chunk.ScoreTrackSequenceDataChunk, evt *eve
 				delta := float64(cs.PitchBend) * float64(cs.PitchBendRange) / 8192.0
 				for note := range cs.GateTimeRest {
 					chTo := sequence.ChannelTo(ch, note)
-					q.port.SendPitch(chTo, note, delta)
+					q.controller.SendPitch(chTo, note, delta)
 				}
 			//case 1: // Master fine tuning
 			//case 2: // Master coarse tuning
@@ -408,7 +416,7 @@ func (q *Sequencer) sendCC(sequence *chunk.ScoreTrackSequenceDataChunk, evt *eve
 	}
 }
 
-func Test(deviceName string) error {
+func debugSendTestTone(deviceName string) error {
 	sp, err := serial.NewSerialPort(deviceName, 76800)
 	if err != nil {
 		return errors.WithStack(err)

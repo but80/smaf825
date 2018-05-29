@@ -10,26 +10,45 @@ import (
 	"gopkg.in/but80/go-smaf.v1/voice"
 )
 
+// ChannelState は、チャンネルの状態です。
 type ChannelState struct {
+	// KeyControlStatus は、現在のキーのコントロール状態です。
 	KeyControlStatus enums.KeyControlStatus
-	Velocity         int
-	GateTimeRest     map[enums.Note]int
-	BankMSB          int
-	BankLSB          int
-	PC               int
-	ToneID           int
-	PitchBend        int
-	PitchBendRange   int
-	Modulation       int
-	Volume           int
-	Panpot           int
-	Expression       int
-	OctaveShift      int
-	Mono             bool
-	RPNMSB           int
-	RPNLSB           int
+	// Velocity は、現在のベロシティです。
+	Velocity int
+	// GateTimeRest は、各ノートの現在のゲートタイム残時間 [tick] です。
+	GateTimeRest map[enums.Note]int
+	// BankMSB は、現在のバンクMSBです。
+	BankMSB int
+	// BankLSB は、現在のバンクLSBです。
+	BankLSB int
+	// PC は、現在のプログラムチェンジです。
+	PC int
+	// ToneID は、現在の音色IDです。
+	ToneID int
+	// PitchBend は、現在のピッチベンド値です。
+	PitchBend int
+	// PitchBendRange は、現在のピッチベンド幅です。
+	PitchBendRange int
+	// Modulation は、現在のモジュレーション量です。
+	Modulation int
+	// Volume は、現在のボリュームです。
+	Volume int
+	// Panpot は、現在のパンポット値です。
+	Panpot int
+	// Expression は、現在のエクスプレッション値です。
+	Expression int
+	// OctaveShift は、現在のオクターブシフト値です。
+	OctaveShift int
+	// Mono は、現在モノモードのときtrueとします。
+	Mono bool
+	// RPNMSB は、現在のRPN MSBです。
+	RPNMSB int
+	// RPNLSB は、現在のRPN LSBです。
+	RPNLSB int
 }
 
+// Tick は、現在の状態を 1 tick 進め、ゲートタイム残時間を更新します。
 func (cs *ChannelState) Tick() []enums.Note {
 	notes := []enums.Note{}
 	for note, t := range cs.GateTimeRest {
@@ -47,6 +66,8 @@ func (cs *ChannelState) Tick() []enums.Note {
 	return notes
 }
 
+// AllOff は、全ノートのゲートタイム残時間を 0 にリセットします。
+// 現時点で発音中だったノートの一覧を返します。
 func (cs *ChannelState) AllOff() []enums.Note {
 	notes := []enums.Note{}
 	for note := range cs.GateTimeRest {
@@ -56,10 +77,12 @@ func (cs *ChannelState) AllOff() []enums.Note {
 	return notes
 }
 
+// HasRest は、まだ発音中のノートがあるときtrueを返します。
 func (cs *ChannelState) HasRest() bool {
 	return 0 < len(cs.GateTimeRest)
 }
 
+// NoteOn は、指定のノートがキーオンされたものとしてゲートタイム残時間を更新します。
 func (cs *ChannelState) NoteOn(note enums.Note, gateTime int) {
 	if cs.KeyControlStatus != enums.KeyControlStatus_Off {
 		cs.GateTimeRest = map[enums.Note]int{}
@@ -67,6 +90,7 @@ func (cs *ChannelState) NoteOn(note enums.Note, gateTime int) {
 	cs.GateTimeRest[note] = gateTime
 }
 
+// Print は、現在の状態を表示します。
 func (cs *ChannelState) Print(num int) {
 	mono := "Off"
 	if cs.Mono {
@@ -101,6 +125,7 @@ func (cs *ChannelState) Print(num int) {
 	)
 }
 
+// Tones は、音色データです。
 type Tones []*voice.VM35VoicePC
 
 func (t Tones) Len() int {
@@ -120,20 +145,26 @@ func (t Tones) Swap(i, j int) {
 	t[i], t[j] = t[j], t[i]
 }
 
-type SequencerState struct {
+// StateStatic は、シーケンサの状態です。
+type StateStatic struct {
+	// Channels は、各チャンネルの状態です。
 	Channels [16]*ChannelState
-	Tones    Tones
-	IsMA5    bool
+	// Tones は、音色データです。
+	Tones Tones
+	// IsMA5 は、MA-5用のシーケンスを再生中はtrueとします。
+	IsMA5 bool
 }
 
-func (ss *SequencerState) AddTone(pc *voice.VM35VoicePC) {
+// AddTone は、音色データを追加します。
+func (ss *StateStatic) AddTone(pc *voice.VM35VoicePC) {
 	ss.Tones = append(ss.Tones, pc)
 	if pc.Version == voice.VM35FMVoiceVersion_VM5 {
 		ss.IsMA5 = true
 	}
 }
 
-func (ss *SequencerState) ToneData() []*voice.VM35FMVoice {
+// ToneData は、音色データ中のFM音色定義部を一覧で返します。
+func (ss *StateStatic) ToneData() []*voice.VM35FMVoice {
 	sort.Sort(ss.Tones)
 	tones := []*voice.VM35FMVoice{}
 	for _, t := range ss.Tones {
@@ -146,7 +177,8 @@ func (ss *SequencerState) ToneData() []*voice.VM35FMVoice {
 	return tones
 }
 
-func (ss *SequencerState) GetToneIDByPC(bankMSB, bankLSB, PC int) int {
+// GetToneIDByPC は、プログラムチェンジ番号から音色データIDを取得します。
+func (ss *StateStatic) GetToneIDByPC(bankMSB, bankLSB, PC int) int {
 	for i, pc := range ss.Tones {
 		if pc.BankMSB == bankMSB && pc.BankLSB == bankLSB && pc.PC == PC /*&& !pc.IsForDrum()*/ { // @todo uncomment
 			return i
@@ -155,7 +187,8 @@ func (ss *SequencerState) GetToneIDByPC(bankMSB, bankLSB, PC int) int {
 	return -1
 }
 
-func (ss *SequencerState) GetToneIDByPCAndDrumNote(bankMSB, bankLSB, PC int, note enums.Note) int {
+// GetToneIDByPCAndDrumNote は、プログラムチェンジ番号とノートナンバーから音色データIDを取得します。
+func (ss *StateStatic) GetToneIDByPCAndDrumNote(bankMSB, bankLSB, PC int, note enums.Note) int {
 	for i, pc := range ss.Tones {
 		if pc.BankMSB == bankMSB && pc.BankLSB == bankLSB && pc.PC == PC && pc.DrumNote == note {
 			return i
@@ -164,7 +197,8 @@ func (ss *SequencerState) GetToneIDByPCAndDrumNote(bankMSB, bankLSB, PC int, not
 	return -1
 }
 
-func (ss *SequencerState) Tick(fn func(int, []enums.Note)) {
+// Tick は、現在の状態を 1 tick 進め、全チャンネルのゲートタイム残時間を更新します。
+func (ss *StateStatic) Tick(fn func(int, []enums.Note)) {
 	for ch := 0; ch < 16; ch++ {
 		notes := ss.Channels[ch].Tick()
 		if 0 < len(notes) {
@@ -173,7 +207,8 @@ func (ss *SequencerState) Tick(fn func(int, []enums.Note)) {
 	}
 }
 
-func (ss *SequencerState) HasRest() bool {
+// HasRest は、いずれかのチャンネルにまだ発音中のノートがあるときtrueを返します。
+func (ss *StateStatic) HasRest() bool {
 	for ch := 0; ch < 16; ch++ {
 		if ss.Channels[ch].HasRest() {
 			return true
@@ -182,7 +217,8 @@ func (ss *SequencerState) HasRest() bool {
 	return false
 }
 
-func (ss *SequencerState) Print() {
+// Print は、現在の状態を表示します。
+func (ss *StateStatic) Print() {
 	fmt.Print(cursor.ClearEntireScreen())
 	fmt.Print(cursor.MoveTo(0, 0))
 	fmt.Println("Ch Bank     PC Note      Bend Mod Vol Exp Pan Mono")
@@ -191,7 +227,8 @@ func (ss *SequencerState) Print() {
 	}
 }
 
-var State = SequencerState{Channels: [16]*ChannelState{}}
+// State は、シーケンサの状態を保持する唯一のインスタンスです。
+var State = StateStatic{Channels: [16]*ChannelState{}}
 
 func init() {
 	State.Tones = []*voice.VM35VoicePC{}

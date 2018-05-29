@@ -19,13 +19,15 @@ import (
 )
 
 const (
-	SKETCH_VERSION_GTE  = 120
-	SKETCH_VERSION_LT   = 140
-	ARDUINO_BUFFER_SIZE = 60
+	sketchVersionGTE  = 120
+	sketchVersionLT   = 140
+	arduinoBufferSize = 60
 )
 
+// BaudRates は、ボーレートの選択肢です。
 var BaudRates = []int{300, 600, 1200, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600, 115200}
 
+// IsValidBaudRate は、指定した整数値がボーレートとして使用可能かを判定します。
 func IsValidBaudRate(r int) bool {
 	for _, v := range BaudRates {
 		if v == r {
@@ -35,12 +37,14 @@ func IsValidBaudRate(r int) bool {
 	return false
 }
 
+// BaudRateList は、ボーレートの選択肢を一覧表示します。
 func BaudRateList() string {
 	s := fmt.Sprint(BaudRates)
 	return "(" + strings.Replace(s[1:len(s)-1], " ", "|", -1) + ")"
 }
 
-type SerialPort struct {
+// Controller は、シリアルポート経由でYMF825を制御するコントローラです。
+type Controller struct {
 	deviceName    string
 	ser           io.ReadWriteCloser
 	closed        bool
@@ -53,14 +57,15 @@ type SerialPort struct {
 	bufferMutex   sync.Mutex
 }
 
-func NewSerialPort(deviceName string, baudRate int) (*SerialPort, error) {
+// NewSerialPort は、新しい Controller を作成します。
+func NewSerialPort(deviceName string, baudRate int) (*Controller, error) {
 	log.Infof("opening serial port")
-	sp := &SerialPort{
+	sp := &Controller{
 		deviceName: deviceName,
 		selectedCh: -1,
 		commands:   []Command{},
 		buffer:     []byte{},
-		sendable:   ARDUINO_BUFFER_SIZE,
+		sendable:   arduinoBufferSize,
 	}
 	if sp.isNullDevice() {
 		sp.closed = true
@@ -111,10 +116,10 @@ func NewSerialPort(deviceName string, baudRate int) (*SerialPort, error) {
 					continue
 				}
 				if s == "ready" {
-					if !(SKETCH_VERSION_GTE <= sp.sketchVersion && sp.sketchVersion < SKETCH_VERSION_LT) {
+					if !(sketchVersionGTE <= sp.sketchVersion && sp.sketchVersion < sketchVersionLT) {
 						wait <- fmt.Errorf(
-							`Sketch version mismatch (want %d <= version < %d, got %d). Please rewrite "bridge/bridge.ino" onto Arduino.`,
-							SKETCH_VERSION_GTE, SKETCH_VERSION_LT, sp.sketchVersion,
+							`sketch version mismatch (want %d <= version < %d, got %d). please rewrite "bridge/bridge.ino" onto Arduino`,
+							sketchVersionGTE, sketchVersionLT, sp.sketchVersion,
 						)
 					}
 					close(wait)
@@ -132,7 +137,8 @@ func NewSerialPort(deviceName string, baudRate int) (*SerialPort, error) {
 	return sp, nil
 }
 
-func (sp *SerialPort) Close() {
+// Close は、シリアルポート接続を終了します。
+func (sp *Controller) Close() {
 	sp.closed = true
 	if sp.ser != nil {
 		log.Infof("closing serial port")
@@ -142,18 +148,19 @@ func (sp *SerialPort) Close() {
 	sp.ser = nil
 }
 
-func (sp *SerialPort) isNullDevice() bool {
+func (sp *Controller) isNullDevice() bool {
 	return sp.deviceName == "/dev/null" || sp.deviceName == "--"
 }
 
-func (sp *SerialPort) Flush() bool {
+// Flush は、バッファに蓄積されたコマンドをシリアルポート経由で送信し、バッファを空にします。
+func (sp *Controller) Flush() bool {
 	sp.bufferMutex.Lock()
 	defer sp.bufferMutex.Unlock()
 	sp.flush()
 	return len(sp.buffer) == 0
 }
 
-func (sp *SerialPort) flush() {
+func (sp *Controller) flush() {
 	if sp.closed {
 		return
 	}
@@ -183,7 +190,7 @@ func (sp *SerialPort) flush() {
 
 var sendCommandOnce sync.Once
 
-func (sp *SerialPort) sendCommand(c Command) {
+func (sp *Controller) sendCommand(c Command) {
 	sendCommandOnce.Do(func() {
 		ticker := time.NewTicker(8 * time.Millisecond)
 		// @todo stop goroutine
@@ -198,7 +205,8 @@ func (sp *SerialPort) sendCommand(c Command) {
 	sp.commands = append(sp.commands, c)
 }
 
-func (sp *SerialPort) SendWait(msec int) {
+// SendWait は、指定した時間だけ待機するコマンドを送信します。
+func (sp *Controller) SendWait(msec int) {
 	new := true
 	sp.bufferMutex.Lock()
 	defer func() {
@@ -218,19 +226,20 @@ func (sp *SerialPort) SendWait(msec int) {
 	new = false
 }
 
-func (sp *SerialPort) SendTerminate() {
+// SendTerminate は、シリアルポート接続を終了するコマンドを送信します。
+func (sp *Controller) SendTerminate() {
 	sp.sendCommand(&TerminateCommand{})
 }
 
-func (sp *SerialPort) sendData(addr uint8, data []byte) {
+func (sp *Controller) sendData(addr uint8, data []byte) {
 	sp.sendCommand(NewSPICommand(addr, data))
 }
 
-func (sp *SerialPort) send(addr uint8, data byte) {
+func (sp *Controller) send(addr uint8, data byte) {
 	sp.sendCommand(NewSPICommand1(addr, data))
 }
 
-func (sp *SerialPort) sendChannelSelect(ch int) {
+func (sp *Controller) sendChannelSelect(ch int) {
 	// http://madscient.hatenablog.jp/entry/2017/08/13/013913
 	// レジスタ#11の下位4ビットに操作したいチャンネル番号を0～15で書き込むことで、
 	// レジスタ#12～20に対応するチャンネルのControl Registerが現れます。
@@ -250,29 +259,34 @@ func (sp *SerialPort) sendChannelSelect(ch int) {
 	sp.selectedCh = ch
 }
 
-func (sp *SerialPort) SendAllOff() {
+// SendAllOff は、発音をすべて停止するコマンドを送信します。
+func (sp *Controller) SendAllOff() {
 	// https://github.com/yamaha-webmusic/ymf825board/blob/master/manual/fbd_spec2.md#sequencer-setting
 	sp.send(8, 0xF6)
 	sp.SendWait(1)
 	sp.send(8, 0x00)
 }
 
+// SendMasterVolume は、マスターボリュームを変更するコマンドを送信します。
 // 0<=v<64
-func (sp *SerialPort) SendMasterVolume(v int) {
+func (sp *Controller) SendMasterVolume(v int) {
 	sp.send(25, byte(v<<2))
 }
 
+// SendAnalogGain は、アナログゲインを変更するコマンドを送信します。
 // 0<=g<4
-func (sp *SerialPort) SendAnalogGain(g int) {
+func (sp *Controller) SendAnalogGain(g int) {
 	sp.send(3, byte(g))
 }
 
+// SendSeqVol は、SeqVol を変更するコマンドを送信します。
 // 0<=v<32
-func (sp *SerialPort) SendSeqVol(v int) {
+func (sp *Controller) SendSeqVol(v int) {
 	sp.send(9, byte(v<<3))
 }
 
-func (sp *SerialPort) SendTones(data []*voice.VM35FMVoice) {
+// SendTones は、音色データを送信します。
+func (sp *Controller) SendTones(data []*voice.VM35FMVoice) {
 	// Contents Format
 	// The contents format specifies tone parameters and the sequence of data that can be played back with this device consists of melody contents.
 	// The contents are written into the register (I_ADR#7: CONTENTS_DATA_REG) via the CPU interface.
@@ -295,8 +309,9 @@ func (sp *SerialPort) SendTones(data []*voice.VM35FMVoice) {
 	sp.sendData(7, b)
 }
 
+// SendVibrato は、指定チャンネルのビブラートの深さを変更するコマンドを送信します。
 // 0<=vib<8
-func (sp *SerialPort) SendVibrato(ch, vib int) {
+func (sp *Controller) SendVibrato(ch, vib int) {
 	// |I_ADR|W/R|D7 |D6    |D5    |D4    |D3    |D2    |D1   |D0    |Reset Value|
 	// |#17  |W  |"0"|"0"   |"0"   |"0"   |"0"   |XVB2  |XVB1 |XVB0  |00H        |
 	//
@@ -320,8 +335,9 @@ func (sp *SerialPort) SendVibrato(ch, vib int) {
 	sp.send(17, byte(vib&7))
 }
 
+// SendVolume は、指定チャンネルのボリュームを変更するコマンドを送信します。
 // 0<=ChVol<32
-func (sp *SerialPort) SendVolume(ch, ChVol int, DIR_CV bool) {
+func (sp *Controller) SendVolume(ch, chVol int, dirCV bool) {
 	// |I_ADR|W/R|D7 |D6    |D5    |D4    |D3    |D2    |D1 |D0    |Reset Value|
 	// |#16  |W  |"0"|ChVol4|ChVol3|ChVol2|ChVol1|ChVol0|"0"|DIR_CV|60H        |
 	//
@@ -341,15 +357,16 @@ func (sp *SerialPort) SendVolume(ch, ChVol int, DIR_CV bool) {
 		return
 	}
 	b := 0
-	if DIR_CV {
+	if dirCV {
 		b = 1
 	}
 	sp.sendChannelSelect(ch)
-	sp.send(16, byte(ChVol&31<<2|b))
+	sp.send(16, byte(chVol&31<<2|b))
 }
 
+// SendFineTune は、指定チャンネルのFine Tuneを変更するコマンドを送信します。
 // 0<=INT<4 0<=FRAC<512
-func (sp *SerialPort) SendFineTune(ch, INT, FRAC int) {
+func (sp *Controller) SendFineTune(ch, intVal, frac int) {
 	// |I_ADR|W/R|D7 |D6   |D5   |D4   |D3   |D2   |D1   |D0   |Reset Value|
 	// |#18  |W  |"0"|"0"  |"0"  |INT1 |INT0 |FRAC8|FRAC7|FRAC6|08H        |
 	// |#19  |W  |"0"|FRAC5|FRAC4|FRAC3|FRAC2|FRAC1|FRAC0|"0"  |00H        |
@@ -365,11 +382,12 @@ func (sp *SerialPort) SendFineTune(ch, INT, FRAC int) {
 		return
 	}
 	sp.sendChannelSelect(ch)
-	sp.send(18, byte(INT&3<<3|FRAC>>6&7))
-	sp.send(19, byte(FRAC&63<<1))
+	sp.send(18, byte(intVal&3<<3|frac>>6&7))
+	sp.send(19, byte(frac&63<<1))
 }
 
-func (sp *SerialPort) SendFineTuneByFloat(ch int, r float64) {
+// SendFineTuneByFloat は、指定チャンネルのFine Tuneを変更するコマンドを送信します。
+func (sp *Controller) SendFineTuneByFloat(ch int, r float64) {
 	if ch < 0 {
 		return
 	}
@@ -379,7 +397,8 @@ func (sp *SerialPort) SendFineTuneByFloat(ch int, r float64) {
 	sp.SendFineTune(ch, INT, FRAC)
 }
 
-func (sp *SerialPort) SendKeyOn(ch int, note enums.Note, delta float64, VoVol, ToneNum int) {
+// SendKeyOn は、指定チャンネルでキーオンするコマンドを送信します。
+func (sp *Controller) SendKeyOn(ch int, note enums.Note, delta float64, voVol, toneNum int) {
 	// https://github.com/yamaha-webmusic/ymf825board/blob/master/manual/fbd_spec2.md#control-register-write-registers
 	//
 	// |I_ADR |W/R|D7 |D6    |D5    |D4    |D3       |D2       |D1       |D0       |Reset Value|
@@ -392,13 +411,14 @@ func (sp *SerialPort) SendKeyOn(ch int, note enums.Note, delta float64, VoVol, T
 	}
 	f := note.Freq(delta)
 	sp.sendChannelSelect(ch)
-	sp.send(12, byte(VoVol&31<<2))
+	sp.send(12, byte(voVol&31<<2))
 	sp.send(13, byte((f.Fnum>>7&7)<<3|f.Block&7))
 	sp.send(14, byte(f.Fnum&127))
-	sp.send(15, 0x40|byte(ToneNum&15))
+	sp.send(15, 0x40|byte(toneNum&15))
 }
 
-func (sp *SerialPort) SendPitch(ch int, note enums.Note, delta float64) {
+// SendPitch は、指定チャンネルの発音ピッチを変更するコマンドを送信します。
+func (sp *Controller) SendPitch(ch int, note enums.Note, delta float64) {
 	if ch < 0 {
 		return
 	}
@@ -408,15 +428,17 @@ func (sp *SerialPort) SendPitch(ch int, note enums.Note, delta float64) {
 	sp.send(14, byte(f.Fnum&127))
 }
 
-func (sp *SerialPort) SendKeyOff(ch, ToneNum int) {
+// SendKeyOff は、指定チャンネルでキーオフするコマンドを送信します。
+func (sp *Controller) SendKeyOff(ch, toneNum int) {
 	if ch < 0 {
 		return
 	}
 	sp.sendChannelSelect(ch)
-	sp.send(15, byte(ToneNum&15))
+	sp.send(15, byte(toneNum&15))
 }
 
-func (sp *SerialPort) SendMuteAndEGReset(ch int) {
+// SendMuteAndEGReset は、指定チャンネルを直ちにミュートするコマンドを送信します。
+func (sp *Controller) SendMuteAndEGReset(ch int) {
 	if ch < 0 {
 		return
 	}

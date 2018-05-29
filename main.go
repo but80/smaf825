@@ -96,7 +96,7 @@ var playCmd = cli.Command{
 			DeviceName: args[0],
 			ShowState:  ctx.Bool("state"),
 		}
-		opts := &sequencer.SequencerOptions{
+		opts := &sequencer.Options{
 			Loop:     ctx.Int("loop"),
 			Volume:   ctx.Int("volume"),
 			Gain:     ctx.Int("gain"),

@@ -1,5 +1,8 @@
 # smaf825
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/but80/smaf825)](https://goreportcard.com/report/github.com/but80/smaf825)
+[![MIT License](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE)
+
 SMAFフォーマットの着メロを Arduino + YMF825Board でそれなりに再生するプレイヤーです。
 
 - macOS Sierra、Windows 10で動作確認しています。

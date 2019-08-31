@@ -1,6 +1,7 @@
-.idea
+/.idea
+/smaf825
 *.mmf
-dist
+
 
 # Created by https://www.gitignore.io/api/osx,windows,code,intellij,go
 

@@ -1,0 +1,10 @@
+linters:
+  disable:
+    - errcheck
+    - structcheck
+  enable:
+    - unused
+    - vet
+    - golint
+    - goimports
+    - gocyclo

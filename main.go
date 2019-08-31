@@ -26,7 +26,7 @@ func init() {
 var playCmd = cli.Command{
 	Name:      "play",
 	Aliases:   []string{"p"},
-	Usage:     "Plays SMAF format files (.mmf|.spf)",
+	Usage:     "Play SMAF format file (.mmf|.spf)",
 	ArgsUsage: "<device> <filename>",
 	Flags: []cli.Flag{
 		cli.BoolFlag{
@@ -114,24 +114,24 @@ var playCmd = cli.Command{
 var dumpCmd = cli.Command{
 	Name:      "dump",
 	Aliases:   []string{"d"},
-	Usage:     "Dumps SMAF format files (.mmf|.spf|.vma|.vm3|.vm5)",
+	Usage:     "Dump SMAF format file (.mmf|.spf|.vma|.vm3|.vm5)",
 	ArgsUsage: "<filename>",
 	Flags: []cli.Flag{
 		cli.BoolFlag{
 			Name:  "json, j",
-			Usage: `Dumps in JSON format`,
+			Usage: `Dump in JSON format`,
 		},
 		cli.BoolFlag{
 			Name:  "protobuf, p",
-			Usage: `Dumps in protobuf`,
+			Usage: `Dump in protobuf`,
 		},
 		cli.BoolFlag{
 			Name:  "voice, v",
-			Usage: `Dumps voice data only`,
+			Usage: `Dump voice data only`,
 		},
 		cli.BoolFlag{
 			Name:  "exclusive, x",
-			Usage: `Dumps exclusives only`,
+			Usage: `Dump exclusives only`,
 		},
 		cli.BoolFlag{
 			Name:  "debug, d",
@@ -223,7 +223,7 @@ func main() {
 	//app.EnableBashCompletion = true
 	app.Name = "smaf825"
 	app.Version = version
-	app.Usage = "Plays SMAF format files on YMF825 board"
+	app.Usage = "Play SMAF format file on YMF825 board"
 	app.Authors = []cli.Author{
 		{
 			Name:  "but80",

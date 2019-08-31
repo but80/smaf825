@@ -26,10 +26,11 @@ brew install smaf825
 1. [Releases](https://github.com/but80/smaf825/v2/releases) からアーカイブをダウンロードしてください。
 2. アーカイブに含まれるバイナリを適当な場所に置き、パスを通してください。
 
-### Go 1.8 でのインストール（開発者向け）
+### Go 1.12.9 でのインストール（開発者向け）
 
-1. [Go 1.8 をインストール](https://golang.org/dl/) してください。
-2. `go get -u github.com/but80/smaf825/v2` にて、当プロジェクトをcloneしてください。
+1. [Go 1.12.9 をインストール](https://golang.org/dl/) してください。
+2. `git clone https://github.com/but80/smaf825.git` にて、当プロジェクトをcloneしてください。
+3. `cd smaf825 && go run mage.go install` にてインストールされます。
 
 注意：こちらの手順でインストールされた `smaf825` は、バージョン番号を表示しません。
 

@@ -5,9 +5,9 @@ import (
 	"sort"
 
 	"github.com/ahmetalpbalkan/go-cursor"
-	"gopkg.in/but80/go-smaf.v1/enums"
-	"gopkg.in/but80/go-smaf.v1/log"
-	"gopkg.in/but80/go-smaf.v1/voice"
+	"github.com/but80/go-smaf/v2/enums"
+	"github.com/but80/go-smaf/v2/log"
+	"github.com/but80/go-smaf/v2/voice"
 )
 
 // ChannelState は、チャンネルの状態です。
@@ -84,7 +84,7 @@ func (cs *ChannelState) HasRest() bool {
 
 // NoteOn は、指定のノートがキーオンされたものとしてゲートタイム残時間を更新します。
 func (cs *ChannelState) NoteOn(note enums.Note, gateTime int) {
-	if cs.KeyControlStatus != enums.KeyControlStatus_Off {
+	if cs.KeyControlStatus != enums.KeyControlStatusOff {
 		cs.GateTimeRest = map[enums.Note]int{}
 	}
 	cs.GateTimeRest[note] = gateTime
@@ -158,7 +158,7 @@ type StateStatic struct {
 // AddTone は、音色データを追加します。
 func (ss *StateStatic) AddTone(pc *voice.VM35VoicePC) {
 	ss.Tones = append(ss.Tones, pc)
-	if pc.Version == voice.VM35FMVoiceVersion_VM5 {
+	if pc.Version == voice.VM35FMVoiceVersionVM5 {
 		ss.IsMA5 = true
 	}
 }
@@ -234,7 +234,7 @@ func init() {
 	State.Tones = []*voice.VM35VoicePC{}
 	for i := 0; i < 16; i++ {
 		State.Channels[i] = &ChannelState{
-			KeyControlStatus: enums.KeyControlStatus_On,
+			KeyControlStatus: enums.KeyControlStatusOn,
 			GateTimeRest:     map[enums.Note]int{},
 			ToneID:           0,
 			Panpot:           64,

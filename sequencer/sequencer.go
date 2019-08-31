@@ -6,15 +6,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/but80/smaf825/serial"
+	"github.com/but80/go-smaf/v2/chunk"
+	"github.com/but80/go-smaf/v2/enums"
+	"github.com/but80/go-smaf/v2/event"
+	"github.com/but80/go-smaf/v2/log"
+	"github.com/but80/go-smaf/v2/voice"
+	"github.com/but80/smaf825/v2/serial"
 	"github.com/pkg/errors"
 	"github.com/xlab/closer"
-	"gopkg.in/but80/go-smaf.v1/chunk"
-	"gopkg.in/but80/go-smaf.v1/enums"
-	"gopkg.in/but80/go-smaf.v1/event"
-	"gopkg.in/but80/go-smaf.v1/log"
-	"gopkg.in/but80/go-smaf.v1/util"
-	"gopkg.in/but80/go-smaf.v1/voice"
 )
 
 /*
@@ -59,6 +58,18 @@ var debugFlags = struct {
 	Volume:     false,
 	Octave:     false,
 	KeyControl: false,
+}
+
+// gcd は、2つの整数の最大公約数を求めます。
+func gcd(a, b int) int {
+	for a != b {
+		if a < b {
+			b -= a
+		} else {
+			a -= b
+		}
+	}
+	return a
 }
 
 // Play は、シーケンサの演奏を開始します。
@@ -122,17 +133,17 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, opts *Options) error {
 	if score != nil {
 		allOff := true
 		for _, st := range score.ChannelStatus {
-			if st.KeyControlStatus != enums.KeyControlStatus_Off {
+			if st.KeyControlStatus != enums.KeyControlStatusOff {
 				allOff = false
 				break
 			}
 		}
 		for ch, st := range score.ChannelStatus {
 			if allOff || debugFlags.KeyControl {
-				st.KeyControlStatus = enums.KeyControlStatus_On
+				st.KeyControlStatus = enums.KeyControlStatusOn
 			}
 			State.Channels[ch].KeyControlStatus = st.KeyControlStatus
-			if st.KeyControlStatus == enums.KeyControlStatus_Off {
+			if st.KeyControlStatus == enums.KeyControlStatusOff {
 				channelsToSplit = append(channelsToSplit, ch)
 			}
 		}
@@ -143,12 +154,12 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, opts *Options) error {
 	log.Debugf("collecting voices")
 	for _, x := range setup.GetExclusives() {
 		switch x.Type {
-		case enums.ExclusiveType_VM35Voice:
+		case enums.ExclusiveTypeVM35Voice:
 			v := x.VM35VoicePC
-			if v != nil && v.VoiceType == enums.VoiceType_FM && !sequence.IsIgnoredPC(v.BankMSB, v.BankLSB, v.PC, v.DrumNote) {
+			if v != nil && v.VoiceType == enums.VoiceTypeFM && !sequence.IsIgnoredPC(v.BankMSB, v.BankLSB, v.PC, v.DrumNote) {
 				State.AddTone(v)
 			}
-		case enums.ExclusiveType_VMAVoice:
+		case enums.ExclusiveTypeVMAVoice:
 			v := x.VMAVoicePC
 			if v != nil && !sequence.IsIgnoredPC(0, v.Bank, v.PC, 0) {
 				State.AddTone(v.ToVM35())
@@ -182,7 +193,7 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, opts *Options) error {
 		durationTickCycle = 1
 		gateTickCycle = 1
 	} else {
-		timeBase = util.GCD(score.DurationTimeBase, score.GateTimeBase)
+		timeBase = gcd(score.DurationTimeBase, score.GateTimeBase)
 		durationTickCycle = score.DurationTimeBase / timeBase
 		gateTickCycle = score.GateTimeBase / timeBase
 	}
@@ -212,7 +223,7 @@ func (q *Sequencer) Play(mmf *chunk.FileChunk, opts *Options) error {
 					for _, note := range notes {
 						chTo := sequence.ChannelTo(enums.Channel(ch), note)
 						toneID := cs.ToneID
-						if cs.KeyControlStatus == enums.KeyControlStatus_Off {
+						if cs.KeyControlStatus == enums.KeyControlStatusOff {
 							toneID = State.GetToneIDByPCAndDrumNote(cs.BankMSB, cs.BankLSB, cs.PC, note)
 						}
 						q.controller.SendKeyOff(chTo, toneID)
@@ -298,7 +309,7 @@ func (q *Sequencer) processEvent(sequence *chunk.ScoreTrackSequenceDataChunk, ga
 		note := evt.Note
 		toneID := cs.ToneID
 		chTo := sequence.ChannelTo(ch, note)
-		if cs.KeyControlStatus == enums.KeyControlStatus_Off {
+		if cs.KeyControlStatus == enums.KeyControlStatusOff {
 			toneID = State.GetToneIDByPCAndDrumNote(cs.BankMSB, cs.BankLSB, cs.PC, note)
 			if 0 <= toneID {
 				note = State.Tones[toneID].Voice.(*voice.VM35FMVoice).DrumKey
@@ -352,14 +363,14 @@ func (q *Sequencer) sendCC(sequence *chunk.ScoreTrackSequenceDataChunk, evt *eve
 	cs := State.Channels[ch]
 	chsTo := sequence.ChannelsTo(ch)
 	switch evt.CC {
-	case enums.CC_BankSelectMSB:
+	case enums.CCBankSelectMSB:
 		cs.BankMSB = evt.Value
-	case enums.CC_Modulation:
+	case enums.CCModulation:
 		cs.Modulation = evt.Value
 		for _, chTo := range chsTo {
 			q.controller.SendVibrato(chTo, scale127(evt.Value, 7, 1.0))
 		}
-	case enums.CC_MainVolume:
+	case enums.CCMainVolume:
 		vol := evt.Value
 		if debugFlags.Volume {
 			vol = 127
@@ -368,31 +379,31 @@ func (q *Sequencer) sendCC(sequence *chunk.ScoreTrackSequenceDataChunk, evt *eve
 		for _, chTo := range chsTo {
 			q.controller.SendVolume(chTo, scale127(vol, 31, 1.0), true)
 		}
-	case enums.CC_Panpot:
+	case enums.CCPanpot:
 		cs.Panpot = evt.Value
-	case enums.CC_Expression:
+	case enums.CCExpression:
 		cs.Expression = evt.Value
-	case enums.CC_BankSelectLSB:
+	case enums.CCBankSelectLSB:
 		cs.BankLSB = evt.Value
-	case enums.CC_MonoOn:
+	case enums.CCMonoOn:
 		cs.Mono = true
-	case enums.CC_PolyOn:
+	case enums.CCPolyOn:
 		cs.Mono = false
-	case enums.CC_RPNLSB:
+	case enums.CCRPNLSB:
 		cs.RPNLSB = evt.Value
-	case enums.CC_RPNMSB:
+	case enums.CCRPNMSB:
 		cs.RPNMSB = evt.Value
-	case enums.CC_AllSoundOff:
+	case enums.CCAllSoundOff:
 		notes := cs.AllOff()
 		for _, note := range notes {
 			chTo := sequence.ChannelTo(enums.Channel(ch), note)
 			toneID := cs.ToneID
-			if cs.KeyControlStatus == enums.KeyControlStatus_Off {
+			if cs.KeyControlStatus == enums.KeyControlStatusOff {
 				toneID = State.GetToneIDByPCAndDrumNote(cs.BankMSB, cs.BankLSB, cs.PC, note)
 			}
 			q.controller.SendKeyOff(chTo, toneID)
 		}
-	case enums.CC_DataEntry:
+	case enums.CCDataEntry:
 		switch cs.RPNMSB {
 		case 0:
 			switch cs.RPNLSB {
@@ -440,7 +451,7 @@ func debugSendTestTone(deviceName string) error {
 		0x63, 0x66, 0xF4, 0x54, 0x44, 0x90, 0x00,
 		0x23, 0x69, 0xC2, 0x62, 0x44, 0x10, 0x00,
 		0xF3, 0x82, 0xFF, 0x0C, 0x44, 0x10, 0x00,
-	}, voice.VM35FMVoiceVersion_VM5)
+	}, voice.VM35FMVoiceVersionVM5)
 
 	sp.SendAllOff() // トーン設定時は発音をすべて停止
 	sp.SendTones([]*voice.VM35FMVoice{v})

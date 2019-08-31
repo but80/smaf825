@@ -1,6 +1,6 @@
 # smaf825
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/but80/smaf825)](https://goreportcard.com/report/github.com/but80/smaf825)
+[![Go Report Card](https://goreportcard.com/badge/github.com/but80/smaf825/v2)](https://goreportcard.com/report/github.com/but80/smaf825/v2)
 [![MIT License](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE)
 
 SMAFフォーマットの着メロを Arduino + YMF825Board でそれなりに再生するプレイヤーです。
@@ -23,13 +23,13 @@ brew install smaf825
 
 ### 自前でインストール
 
-1. [Releases](https://github.com/but80/smaf825/releases) からアーカイブをダウンロードしてください。
+1. [Releases](https://github.com/but80/smaf825/v2/releases) からアーカイブをダウンロードしてください。
 2. アーカイブに含まれるバイナリを適当な場所に置き、パスを通してください。
 
 ### Go 1.8 でのインストール（開発者向け）
 
 1. [Go 1.8 をインストール](https://golang.org/dl/) してください。
-2. `go get -u github.com/but80/smaf825` にて、当プロジェクトをcloneしてください。
+2. `go get -u github.com/but80/smaf825/v2` にて、当プロジェクトをcloneしてください。
 
 注意：こちらの手順でインストールされた `smaf825` は、バージョン番号を表示しません。
 

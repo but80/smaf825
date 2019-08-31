@@ -64,6 +64,7 @@ type closer struct {
 	codeErr    int
 	signals    []os.Signal
 	sem        sync.Mutex
+	closeOnce  sync.Once
 	cleanups   []func()
 	errChan    chan struct{}
 	doneChan   chan struct{}
@@ -138,8 +139,7 @@ func Close() {
 			pc, _, _, ok = runtime.Caller(offset)
 			if !ok {
 				// close with an error
-				close(c.errChan)
-				<-c.doneChan
+				c.closeErr()
 				return
 			}
 			frame := newStackFrame(pc)
@@ -147,11 +147,13 @@ func Close() {
 			offset++
 		}
 		// close with an error
-		close(c.errChan)
-		<-c.doneChan
+		c.closeErr()
+		return
 	}
 	// normal close
-	close(c.closeChan)
+	c.closeOnce.Do(func() {
+		close(c.closeChan)
+	})
 	<-c.doneChan
 }
 
@@ -159,20 +161,56 @@ func Close() {
 func Fatalln(v ...interface{}) {
 	out := log.New(os.Stderr, "", log.Flags())
 	out.Output(2, fmt.Sprintln(v...))
-	close(c.errChan)
-	<-c.doneChan
+	c.closeErr()
 }
 
 // Fatalf works the same as log.Fatalf but respects the closer's logic.
 func Fatalf(format string, v ...interface{}) {
 	out := log.New(os.Stderr, "", log.Flags())
 	out.Output(2, fmt.Sprintf(format, v...))
-	close(c.errChan)
-	<-c.doneChan
+	c.closeErr()
+}
+
+// Exit is the same as os.Exit but respects the closer's logic. It converts
+// any error code into ExitCodeErr (= 1, by default).
+func Exit(code int) {
+	// check if there was a panic
+	if x := recover(); x != nil {
+		var (
+			offset int = 3
+			pc     uintptr
+			ok     bool
+		)
+		log.Printf("run time panic: %v", x)
+		for offset < 32 {
+			pc, _, _, ok = runtime.Caller(offset)
+			if !ok {
+				// close with an error
+				c.closeErr()
+				return
+			}
+			frame := newStackFrame(pc)
+			fmt.Print(frame.String())
+			offset++
+		}
+		// close with an error
+		c.closeErr()
+		return
+	}
+	if code == ExitCodeOK {
+		c.closeOnce.Do(func() {
+			close(c.closeChan)
+		})
+		<-c.doneChan
+		return
+	}
+	c.closeErr()
 }
 
 func (c *closer) closeErr() {
-	close(c.errChan)
+	c.closeOnce.Do(func() {
+		close(c.errChan)
+	})
 	<-c.doneChan
 }
 

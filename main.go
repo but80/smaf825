@@ -6,13 +6,13 @@ import (
 	"os"
 	"strings"
 
-	"github.com/but80/smaf825/sequencer"
-	"github.com/but80/smaf825/serial"
+	"github.com/but80/go-smaf/v2/chunk"
+	"github.com/but80/go-smaf/v2/log"
+	"github.com/but80/go-smaf/v2/voice"
+	"github.com/but80/smaf825/v2/sequencer"
+	"github.com/but80/smaf825/v2/serial"
 	"github.com/golang/protobuf/proto"
 	"github.com/urfave/cli"
-	"gopkg.in/but80/go-smaf.v1/chunk"
-	"gopkg.in/but80/go-smaf.v1/log"
-	"gopkg.in/but80/go-smaf.v1/voice"
 )
 
 var version string
@@ -81,11 +81,11 @@ var playCmd = cli.Command{
 			os.Exit(1)
 		}
 		if ctx.Bool("debug") {
-			log.Level = log.LogLevel_Debug
+			log.SetLevel(log.LevelDebug)
 		} else if ctx.Bool("silent") {
-			log.Level = log.LogLevel_None
+			log.SetLevel(log.LevelNone)
 		} else if ctx.Bool("quiet") {
-			log.Level = log.LogLevel_Warn
+			log.SetLevel(log.LevelWarn)
 		}
 		args := ctx.Args()
 		mmf, err := chunk.NewFileChunk(args[1])
@@ -152,11 +152,11 @@ var dumpCmd = cli.Command{
 			os.Exit(1)
 		}
 		if ctx.Bool("debug") {
-			log.Level = log.LogLevel_Debug
+			log.SetLevel(log.LevelDebug)
 		} else if ctx.Bool("silent") {
-			log.Level = log.LogLevel_None
+			log.SetLevel(log.LevelNone)
 		} else if ctx.Bool("quiet") {
-			log.Level = log.LogLevel_Warn
+			log.SetLevel(log.LevelWarn)
 		}
 		file := ctx.Args()[0]
 		ext := ""

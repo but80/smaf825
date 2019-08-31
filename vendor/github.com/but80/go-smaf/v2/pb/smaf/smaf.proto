@@ -1,0 +1,71 @@
+syntax = "proto3";
+package smaf;
+
+message VM5VoiceLib {
+	repeated VM35VoicePC programs = 1;
+}
+
+message VM35VoicePC {
+	VM35FMVoiceVersion version    = 1; // Version number
+	string             name       = 2; // Program name
+	uint32             bank_msb   = 3; // Bank MSB
+	uint32             bank_lsb   = 4; // Bank LSB
+	uint32             pc         = 5; // Program number
+	uint32             drum_note  = 6; // Drum note
+	VoiceType          voice_type = 7; // Voice type
+	VM35FMVoice        fm_voice   = 8; // FM voice parameters (when voice_type = FM)
+	VM35PCMVoice       pcm_voice  = 9; // PCM voice parameters (when voice_type = PCM)
+}
+
+enum VM35FMVoiceVersion {
+	option allow_alias = true;
+	VM35FMVoiceVersionMIN = 0;
+	VM3LIB                = 0;
+	VM3EXCLUSIVE          = 1;
+	VM5                   = 2;
+	VM35FMVoiceVersionMAX = 2;
+}
+
+enum VoiceType {
+	option allow_alias = true;
+	VoiceTypeMIN = 0;
+	FM           = 0;
+	PCM          = 1;
+	AL           = 2;
+	VoiceTypeMAX = 2;
+}
+
+message VM35FMVoice {
+	uint32                  drum_key  = 1; // Drun key
+	uint32                  panpot    = 2; // Panpot
+	uint32                  bo        = 3; // Basic octave
+	uint32                  lfo       = 4; // LFO frequency
+	bool                    pe        = 5; // Panpot enable
+	uint32                  alg       = 6; // Algorithm
+	repeated VM35FMOperator operators = 7; // Operator parameters
+}
+
+message VM35FMOperator {
+	uint32 multi =  1; // Multiplier
+	uint32 dt    =  2; // Detune
+	uint32 ar    =  3; // Attack rate
+	uint32 dr    =  4; // Decay rate
+	uint32 sr    =  5; // Sustain rate
+	uint32 rr    =  6; // Release rate
+	uint32 sl    =  7; // Sustain level
+	uint32 tl    =  8; // Total level
+	uint32 ksl   =  9; // Key Scaling level
+	uint32 dam   = 10; // Depth of tremolo
+	uint32 dvb   = 11; // Depth of vibrato
+	uint32 fb    = 12; // Feedback
+	uint32 ws    = 13; // Wave shape
+	bool   xof   = 14; // Ignore KeyOff
+	bool   sus   = 15; // Keep sustain rate after KeyOff
+	bool   ksr   = 16; // Key Scaling rate
+	bool   eam   = 17; // Enable tremolo
+	bool   evb   = 18; // Enable vibrato
+}
+
+message VM35PCMVoice {
+	bytes raw_data = 1;
+}
